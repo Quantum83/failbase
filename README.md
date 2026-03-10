@@ -23,20 +23,4 @@ Failbase is a parody LinkedIn where you post your failures instead of your wins.
 - [Tailwind CSS](https://tailwindcss.com) — styling
 - [Vercel](https://vercel.com) — deployment
 
-## Running locally
-
-```bash
-npm install
-npm run dev
-```
-
-Add a `.env.local` file with your Supabase credentials:
-
-```
-NEXT_PUBLIC_SUPABASE_URL=your_url
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your_key
-```
-
----
-
-Built by [BasZak](https://github.com/Quantum83)|(https://www.linkedin.com/in/basem-zaky-450733312/) · Part of the weekly Claude build challenge
+Built by BasZak: [Github](https://github.com/Quantum83)|[LinkedIn](https://www.linkedin.com/in/basem-zaky-450733312/) · Part of a weekly Claude build challenge
