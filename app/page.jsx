@@ -11,7 +11,7 @@ export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 export const metadata = {
-  title: "Failbase — Where Professionals Come to Be Honest",
+  title: "Failbase | Where Professionals Come to Be Honest",
 };
 
 export default async function HomePage() {
@@ -36,13 +36,66 @@ export default async function HomePage() {
     .order("created_at", { ascending: false })
     .limit(20);
 
+  // --- Phase 2: Fetch reaction counts, user reactions, comment counts ---
+  const postIds = (realPosts || []).map((p) => p.id);
+  let reactionsByPost = {};
+  let userReactionsByPost = {};
+  let commentCountsByPost = {};
+
+  if (postIds.length > 0) {
+    // Fetch all reactions for displayed posts
+    const { data: allReactions } = await supabase
+      .from("reactions")
+      .select("post_id, reaction_key, user_id")
+      .in("post_id", postIds);
+
+    // Aggregate counts per post
+    (allReactions || []).forEach((r) => {
+      if (!reactionsByPost[r.post_id]) {
+        reactionsByPost[r.post_id] = {
+          yikes: 0,
+          same: 0,
+          skull: 0,
+          understandable: 0,
+        };
+      }
+      reactionsByPost[r.post_id][r.reaction_key]++;
+    });
+
+    // Extract current user's reaction per post
+    if (userProfile) {
+      (allReactions || []).forEach((r) => {
+        if (r.user_id === userProfile.id) {
+          userReactionsByPost[r.post_id] = r.reaction_key;
+        }
+      });
+    }
+
+    // Fetch comment counts
+    const { data: commentRows } = await supabase
+      .from("comments")
+      .select("post_id")
+      .in("post_id", postIds);
+
+    (commentRows || []).forEach((c) => {
+      commentCountsByPost[c.post_id] =
+        (commentCountsByPost[c.post_id] || 0) + 1;
+    });
+  }
+
   const formattedRealPosts = (realPosts || []).map((p) => ({
     ...p,
     username: p.profiles?.username,
     avatar_url: p.profiles?.avatar_url || null,
     avatar_seed: p.profiles?.avatar_seed || null,
-    reactions: null,
-    comments_count: 0,
+    reactions: reactionsByPost[p.id] || {
+      yikes: 0,
+      same: 0,
+      skull: 0,
+      understandable: 0,
+    },
+    userReaction: userReactionsByPost[p.id] || null,
+    comments_count: commentCountsByPost[p.id] || 0,
   }));
 
   const allPosts = [...formattedRealPosts, ...SEED_POSTS];
@@ -116,10 +169,17 @@ export default async function HomePage() {
         </aside>
 
         <section className="flex flex-col gap-4 min-w-0">
-          <FeedSorter posts={allPosts} />
+          <FeedSorter
+            posts={allPosts}
+            currentUserId={userProfile?.id || null}
+          />
           <div className="card p-4 text-center">
             <button
-              style={{ fontSize: "14px", fontWeight: 600, color: theme.accent }}
+              style={{
+                fontSize: "14px",
+                fontWeight: 600,
+                color: theme.accent,
+              }}
               className="hover:underline"
             >
               Load more stories ↓

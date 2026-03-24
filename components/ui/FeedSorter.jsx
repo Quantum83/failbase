@@ -1,7 +1,7 @@
 "use client";
 import { useState, useMemo } from "react";
 import CardFailPost from "@/components/cards/CardFailPost";
-import { getTotalReactions, getFailureScore } from "@/lib/seed-data";
+import { getTotalReactions } from "@/lib/seed-data";
 import { theme } from "@/lib/theme";
 
 const SORTS = [
@@ -10,32 +10,43 @@ const SORTS = [
   { key: "relatable", label: "😭 Most Relatable" },
 ];
 
-export default function FeedSorter({ posts }) {
+function sortPosts(posts, activeSort) {
+  const copy = [...posts];
+  if (activeSort === "shameful") {
+    return copy.sort((a, b) => {
+      const scoreA =
+        getTotalReactions(a.reactions) + (a.comments_count || 0) * 3;
+      const scoreB =
+        getTotalReactions(b.reactions) + (b.comments_count || 0) * 3;
+      return scoreB - scoreA;
+    });
+  }
+  if (activeSort === "recent") {
+    return copy.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+  }
+  if (activeSort === "relatable") {
+    return copy.sort((a, b) => {
+      const relA =
+        (a.reactions?.same || 0) + (a.reactions?.understandable || 0);
+      const relB =
+        (b.reactions?.same || 0) + (b.reactions?.understandable || 0);
+      return relB - relA;
+    });
+  }
+  return copy;
+}
+
+export default function FeedSorter({ posts, currentUserId }) {
   const [activeSort, setActiveSort] = useState("shameful");
 
   const sorted = useMemo(() => {
-    const copy = [...posts];
-    if (activeSort === "shameful")
-      return copy.sort((a, b) => {
-        const scoreA =
-          getTotalReactions(a.reactions) + (a.comments_count || 0) * 3;
-        const scoreB =
-          getTotalReactions(b.reactions) + (b.comments_count || 0) * 3;
-        return scoreB - scoreA;
-      });
-    if (activeSort === "recent")
-      return copy.sort(
-        (a, b) => new Date(b.created_at) - new Date(a.created_at),
-      );
-    if (activeSort === "relatable")
-      return copy.sort((a, b) => {
-        const relA =
-          (a.reactions?.same || 0) + (a.reactions?.understandable || 0);
-        const relB =
-          (b.reactions?.same || 0) + (b.reactions?.understandable || 0);
-        return relB - relA;
-      });
-    return copy;
+    const realPosts = posts.filter((p) => !p.author_id?.startsWith?.("seed-"));
+    const seedPosts = posts.filter((p) => p.author_id?.startsWith?.("seed-"));
+
+    return [
+      ...sortPosts(realPosts, activeSort),
+      ...sortPosts(seedPosts, activeSort),
+    ];
   }, [posts, activeSort]);
 
   return (
@@ -64,7 +75,7 @@ export default function FeedSorter({ posts }) {
 
       {sorted.map((post, i) => (
         <div key={post.id} className={`stagger-${Math.min(i + 1, 5)}`}>
-          <CardFailPost post={post} />
+          <CardFailPost post={post} currentUserId={currentUserId} />
         </div>
       ))}
     </>

@@ -20,7 +20,6 @@ export default function ProfileAboutEdit({
       .from("profiles")
       .update({ about: about.trim() })
       .eq("auth_id", authId);
-
     setIsSaving(false);
     setIsEditing(false);
     router.refresh();
@@ -83,7 +82,10 @@ export default function ProfileAboutEdit({
           <button
             onClick={handleCancel}
             className="px-3 py-1 rounded-full text-xs font-medium transition-opacity hover:opacity-80"
-            style={{ border: `1px solid ${theme.border}`, color: theme.muted }}
+            style={{
+              border: `1px solid ${theme.border}`,
+              color: theme.muted,
+            }}
           >
             Cancel
           </button>
@@ -124,6 +126,9 @@ export default function ProfileAboutEdit({
           color: theme.muted,
           lineHeight: 1.6,
           fontStyle: currentAbout ? "normal" : "italic",
+          wordBreak: "break-word",
+          overflowWrap: "break-word",
+          whiteSpace: "pre-line",
         }}
       >
         {currentAbout ||

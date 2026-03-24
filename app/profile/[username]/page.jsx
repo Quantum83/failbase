@@ -17,6 +17,32 @@ import { theme } from "@/lib/theme";
 
 export const dynamic = "force-dynamic";
 
+export async function generateMetadata({ params }) {
+  const supabase = createSupabaseServerClient();
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("display_name, title")
+    .eq("username", params.username)
+    .single();
+
+  if (profile) {
+    return {
+      title: `${profile.display_name} | Failbase`,
+      description: profile.title || "A professional on Failbase",
+    };
+  }
+
+  const seedProfile = SEED_PROFILES.find((p) => p.username === params.username);
+  if (seedProfile) {
+    return {
+      title: `${seedProfile.display_name} | Failbase`,
+      description: seedProfile.title || "A fictional professional on Failbase",
+    };
+  }
+
+  return { title: "Profile | Failbase" };
+}
+
 function formatNum(n) {
   if (!n) return "0";
   if (n >= 1000) return `${(n / 1000).toFixed(1)}k`;
@@ -29,7 +55,11 @@ const BADGES = [
     label: "Legendary Loser",
     condition: (score) => score > 20000,
   },
-  { emoji: "📉", label: "Serial Failer", condition: (_, count) => count >= 3 },
+  {
+    emoji: "📉",
+    label: "Serial Failer",
+    condition: (_, count) => count >= 3,
+  },
   {
     emoji: "🏆",
     label: "Shame Board Top 10",
@@ -55,13 +85,15 @@ export default async function ProfilePage({ params }) {
 
   if (!dbProfile && !seedProfile) notFound();
 
-  const isRealUser = !!dbProfile;
-  const profile = dbProfile || seedProfile;
+  // A DB row without auth_id that matches a seed username = seed profile in the DB
+  const isSeedInDb = !!dbProfile && !dbProfile.auth_id && !!seedProfile;
+  const isRealUser = !!dbProfile && !isSeedInDb;
+  const profile = isRealUser ? dbProfile : seedProfile || dbProfile;
 
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  const isOwnProfile = user && dbProfile?.auth_id === user.id;
+  const isOwnProfile = user && isRealUser && dbProfile?.auth_id === user.id;
 
   let userPosts = [];
   if (isRealUser) {
@@ -77,7 +109,9 @@ export default async function ProfilePage({ params }) {
       avatar_seed: p.profiles?.avatar_seed || null,
     }));
   } else {
-    userPosts = SEED_POSTS.filter((p) => p.author_id === profile.id);
+    // Use seed-X ID to match seed posts
+    const seedId = seedProfile?.id;
+    userPosts = seedId ? SEED_POSTS.filter((p) => p.author_id === seedId) : [];
   }
 
   const totalScore = isRealUser
@@ -101,6 +135,29 @@ export default async function ProfilePage({ params }) {
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-6">
+      {/* Seed profile banner */}
+      {!isRealUser && (
+        <div
+          className="mb-4 px-4 py-3 rounded-xl flex items-center gap-2"
+          style={{
+            background: theme.highlightLight,
+            border: `1px solid ${theme.highlight}44`,
+          }}
+        >
+          <span>🎭</span>
+          <p
+            style={{
+              fontSize: "13px",
+              color: theme.highlight,
+              fontWeight: 500,
+            }}
+          >
+            This is a fictional profile created for demo purposes. Not a real
+            person.
+          </p>
+        </div>
+      )}
+
       <div className="card mb-5 overflow-hidden">
         <div
           className="h-28 sm:h-36"
@@ -245,7 +302,6 @@ export default async function ProfilePage({ params }) {
             </div>
           </div>
 
-          {/* About — with own edit button for own profile */}
           {isOwnProfile ? (
             <ProfileAboutEdit
               currentAbout={profile.about || ""}
@@ -272,6 +328,9 @@ export default async function ProfilePage({ params }) {
                   color: theme.muted,
                   lineHeight: 1.6,
                   fontStyle: profile.about ? "normal" : "italic",
+                  wordBreak: "break-word",
+                  overflowWrap: "break-word",
+                  whiteSpace: "pre-line",
                 }}
               >
                 {profile.about ||

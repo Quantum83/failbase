@@ -30,7 +30,7 @@ export default function LayoutFooter() {
         <p
           style={{ fontSize: "12px", color: theme.muted, marginBottom: "4px" }}
         >
-          Failbase © {new Date().getFullYear()} —{" "}
+          Failbase © {new Date().getFullYear()}:{" "}
           <em>Failure is the whole point.</em>
         </p>
 
