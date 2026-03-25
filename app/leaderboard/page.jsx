@@ -164,9 +164,9 @@ export default async function LeaderboardPage() {
               className="text-sm max-w-lg"
               style={{ color: "rgba(255,255,255,0.7)" }}
             >
-              A living monument to professional humiliation. Ranked by shame
-              score; a proprietary metric combining reactions, comments, and
-              sheer audacity.
+              A living monument to professional honesty. Ranked by shame score;
+              a proprietary metric combining reactions, comments, and sheer
+              vulnerability.
             </p>
           </div>
         </div>

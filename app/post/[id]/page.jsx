@@ -610,7 +610,7 @@ function SeedCommentPlaceholder({ count }) {
         className="mt-1"
         style={{ fontSize: "12px", color: theme.muted, lineHeight: 1.5 }}
       >
-        This is a seed post. Comments live in the void.
+        This is a demo post. Comments are just for show here.
       </p>
     </div>
   );

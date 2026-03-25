@@ -4,7 +4,13 @@ import FeedSorter from "@/components/ui/FeedSorter";
 import CardProfile from "@/components/cards/CardProfile";
 import CardStatsWidget from "@/components/cards/CardStatsWidget";
 import CardTrendingTopics from "@/components/cards/CardTrendingTopics";
-import { SEED_POSTS, getProfile, getDateSeeded } from "@/lib/seed-data";
+import {
+  SEED_POSTS,
+  SEED_PROFILES,
+  getProfile,
+  getAvatarUrl,
+  getDateSeeded,
+} from "@/lib/seed-data";
 import { theme } from "@/lib/theme";
 
 export const dynamic = "force-dynamic";
@@ -152,6 +158,42 @@ export default async function HomePage() {
     };
   }
 
+  // People Who Get It — real users first, seed fallback to fill 3 spots
+  let peopleQuery = supabase
+    .from("profiles")
+    .select("username, display_name, title, avatar_url, avatar_seed")
+    .not("auth_id", "is", null);
+
+  if (userProfile?.id) {
+    peopleQuery = peopleQuery.neq("id", userProfile.id);
+  }
+
+  const { data: realUsers } = await peopleQuery
+    .order("created_at", { ascending: false })
+    .limit(3);
+
+  const realPeople = (realUsers || []).map((u) => ({
+    name: u.display_name,
+    title: u.title || "Failbase member",
+    username: u.username,
+    avatarUrl: u.avatar_url || getAvatarUrl(u.avatar_seed || "default"),
+  }));
+
+  let peopleWhoGetIt = realPeople;
+  if (peopleWhoGetIt.length < 3) {
+    const seedFallback = SEED_PROFILES.filter(
+      (sp) => !peopleWhoGetIt.find((p) => p.username === sp.username),
+    )
+      .slice(0, 3 - peopleWhoGetIt.length)
+      .map((sp) => ({
+        name: sp.display_name,
+        title: sp.title,
+        username: sp.username,
+        avatarUrl: getAvatarUrl(sp.avatar_seed),
+      }));
+    peopleWhoGetIt = [...peopleWhoGetIt, ...seedFallback];
+  }
+
   return (
     <div className="max-w-6xl mx-auto px-4 py-6">
       <div
@@ -216,7 +258,7 @@ export default async function HomePage() {
             >
               People Who Get It
             </h3>
-            <PeopleYouMayKnow />
+            <PeopleYouMayKnow people={peopleWhoGetIt} />
           </div>
         </aside>
 
@@ -346,34 +388,29 @@ export default async function HomePage() {
   );
 }
 
-function PeopleYouMayKnow() {
-  const people = [
-    { name: "Greg Hoffman", title: "NFT Artist (Retired)", seed: "Greg" },
-    {
-      name: "Stacey Bloom",
-      title: "Life Coach (Self-Certified)",
-      seed: "Stacey",
-    },
-    { name: "Marcus T.", title: "Founder of 0 Products", seed: "Marcus" },
-  ];
+function PeopleYouMayKnow({ people }) {
   return (
     <div className="flex flex-col gap-3">
       {people.map((person) => (
-        <div key={person.name} className="flex items-center gap-2">
-          <div className="w-9 h-9 rounded-full overflow-hidden shrink-0">
+        <div key={person.username} className="flex items-center gap-2">
+          <Link
+            href={`/profile/${person.username}`}
+            className="w-9 h-9 rounded-full overflow-hidden shrink-0"
+          >
             <img
-              src={`https://api.dicebear.com/8.x/notionists/svg?seed=${person.seed}&backgroundColor=b6e3f4,c0aede`}
+              src={person.avatarUrl}
               alt={person.name}
-              className="w-full h-full"
+              className="w-full h-full object-cover"
             />
-          </div>
+          </Link>
           <div className="flex-1 min-w-0">
-            <div
+            <Link
+              href={`/profile/${person.username}`}
+              className="block truncate hover:underline"
               style={{ fontSize: "12px", fontWeight: 600, color: theme.dark }}
-              className="truncate"
             >
               {person.name}
-            </div>
+            </Link>
             <div
               style={{ fontSize: "11px", color: theme.muted }}
               className="truncate"
