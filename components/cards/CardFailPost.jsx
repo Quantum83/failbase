@@ -650,7 +650,7 @@ export default function CardFailPost({
               }
             >
               <span className="text-base">💬</span>
-              <span>Comment</span>
+              <span>Comments</span>
             </button>
           )}
 

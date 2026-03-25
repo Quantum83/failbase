@@ -4,7 +4,7 @@ import FeedSorter from "@/components/ui/FeedSorter";
 import CardProfile from "@/components/cards/CardProfile";
 import CardStatsWidget from "@/components/cards/CardStatsWidget";
 import CardTrendingTopics from "@/components/cards/CardTrendingTopics";
-import { SEED_POSTS } from "@/lib/seed-data";
+import { SEED_POSTS, getProfile, getDateSeeded } from "@/lib/seed-data";
 import { theme } from "@/lib/theme";
 
 export const dynamic = "force-dynamic";
@@ -13,6 +13,13 @@ export const revalidate = 0;
 export const metadata = {
   title: "Failbase | Where Professionals Come to Be Honest",
 };
+
+function getSnippet(content, maxLen = 120) {
+  if (!content) return "";
+  const clean = content.replace(/\n+/g, " ").trim();
+  if (clean.length <= maxLen) return clean;
+  return clean.slice(0, maxLen).trim() + "...";
+}
 
 export default async function HomePage() {
   const supabase = createSupabaseServerClient();
@@ -36,20 +43,17 @@ export default async function HomePage() {
     .order("created_at", { ascending: false })
     .limit(20);
 
-  // --- Phase 2: Fetch reaction counts, user reactions, comment counts ---
   const postIds = (realPosts || []).map((p) => p.id);
   let reactionsByPost = {};
   let userReactionsByPost = {};
   let commentCountsByPost = {};
 
   if (postIds.length > 0) {
-    // Fetch all reactions for displayed posts
     const { data: allReactions } = await supabase
       .from("reactions")
       .select("post_id, reaction_key, user_id")
       .in("post_id", postIds);
 
-    // Aggregate counts per post
     (allReactions || []).forEach((r) => {
       if (!reactionsByPost[r.post_id]) {
         reactionsByPost[r.post_id] = {
@@ -62,7 +66,6 @@ export default async function HomePage() {
       reactionsByPost[r.post_id][r.reaction_key]++;
     });
 
-    // Extract current user's reaction per post
     if (userProfile) {
       (allReactions || []).forEach((r) => {
         if (r.user_id === userProfile.id) {
@@ -71,7 +74,6 @@ export default async function HomePage() {
       });
     }
 
-    // Fetch comment counts
     const { data: commentRows } = await supabase
       .from("comments")
       .select("post_id")
@@ -81,6 +83,37 @@ export default async function HomePage() {
       commentCountsByPost[c.post_id] =
         (commentCountsByPost[c.post_id] || 0) + 1;
     });
+  }
+
+  // Find trending post (most reactions among real posts in last 48hrs)
+  const cutoff = new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString();
+  let trendingPostId = null;
+  let trendingPostData = null;
+
+  const recentRealPosts = (realPosts || []).filter(
+    (p) => p.created_at > cutoff,
+  );
+  if (recentRealPosts.length > 0) {
+    let maxReactions = 0;
+    recentRealPosts.forEach((p) => {
+      const counts = reactionsByPost[p.id] || {
+        yikes: 0,
+        same: 0,
+        skull: 0,
+        understandable: 0,
+      };
+      const total = Object.values(counts).reduce((s, v) => s + v, 0);
+      if (total > maxReactions) {
+        maxReactions = total;
+        trendingPostId = p.id;
+        trendingPostData = p;
+      }
+    });
+    // Only feature if it has at least 1 reaction
+    if (maxReactions < 1) {
+      trendingPostId = null;
+      trendingPostData = null;
+    }
   }
 
   const formattedRealPosts = (realPosts || []).map((p) => ({
@@ -96,9 +129,28 @@ export default async function HomePage() {
     },
     userReaction: userReactionsByPost[p.id] || null,
     comments_count: commentCountsByPost[p.id] || 0,
+    is_featured: p.id === trendingPostId,
   }));
 
   const allPosts = [...formattedRealPosts, ...SEED_POSTS];
+
+  // Story of the Week: trending real post or daily-rotating seed fallback
+  let storyOfWeek;
+  if (trendingPostData) {
+    storyOfWeek = {
+      name: trendingPostData.author_name,
+      snippet: getSnippet(trendingPostData.content),
+      href: `/post/${trendingPostData.id}`,
+    };
+  } else {
+    const seedPick = getDateSeeded(SEED_POSTS, 1, 5)[0];
+    const seedAuthor = getProfile(seedPick.author_id);
+    storyOfWeek = {
+      name: seedAuthor?.display_name || "Anonymous",
+      snippet: getSnippet(seedPick.content),
+      href: `/post/${seedPick.id}`,
+    };
+  }
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-6">
@@ -216,7 +268,7 @@ export default async function HomePage() {
                 marginBottom: "4px",
               }}
             >
-              Kevin "Web5" Larsson
+              {storyOfWeek.name}
             </div>
             <div
               style={{
@@ -226,11 +278,10 @@ export default async function HomePage() {
                 lineHeight: 1.5,
               }}
             >
-              Lost $400K in NFTs. Launched a Substack about it. Still in the
-              Discord. Genuinely inspiring.
+              {storyOfWeek.snippet}
             </div>
             <Link
-              href="/leaderboard"
+              href={storyOfWeek.href}
               style={{
                 fontSize: "12px",
                 fontWeight: 600,
@@ -238,7 +289,7 @@ export default async function HomePage() {
               }}
               className="hover:underline"
             >
-              See full Shame Board →
+              Read the full story →
             </Link>
           </div>
 

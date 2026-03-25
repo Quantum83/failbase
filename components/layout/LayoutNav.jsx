@@ -145,19 +145,21 @@ export default function LayoutNav() {
             );
           })}
 
-          <div
-            className="relative flex flex-col items-center gap-0.5 px-3 py-1 rounded-lg"
-            style={{ color: theme.muted }}
-          >
-            <span className="text-lg leading-none">🔔</span>
-            <span style={{ fontSize: "11px" }}>Regrets</span>
-            <span
-              className="absolute top-0.5 right-1.5 text-white text-[9px] font-bold rounded-full w-4 h-4 flex items-center justify-center"
-              style={{ background: theme.red }}
+          {user && (
+            <div
+              className="relative flex flex-col items-center gap-0.5 px-3 py-1 rounded-lg"
+              style={{ color: theme.muted }}
             >
-              99
-            </span>
-          </div>
+              <span className="text-lg leading-none">🔔</span>
+              <span style={{ fontSize: "11px" }}>Regrets</span>
+              <span
+                className="absolute top-0.5 right-1.5 text-white text-[9px] font-bold rounded-full w-4 h-4 flex items-center justify-center"
+                style={{ background: theme.red }}
+              >
+                99
+              </span>
+            </div>
+          )}
 
           {/* Auth section */}
           {user ? (

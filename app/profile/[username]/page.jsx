@@ -1,17 +1,15 @@
 import { notFound } from "next/navigation";
-import Link from "next/link";
 import { createSupabaseServerClient } from "@/lib/supabase-server";
-import CardFailPost from "@/components/cards/CardFailPost";
 import ProfileEditFields from "@/components/ui/ProfileEditFields";
 import ProfileAboutEdit from "@/components/ui/ProfileAboutEdit";
 import ProfileAvatarUpload from "@/components/ui/ProfileAvatarUpload";
+import ProfileActivityTabs from "@/components/ui/ProfileActivityTabs";
+import AchievementModalWrapper from "@/components/ui/AchievementModalWrapper";
 import {
   SEED_PROFILES,
   SEED_POSTS,
   getAvatarUrl as getSeedAvatar,
-  formatNumber,
   getTotalReactions,
-  getFailureScore,
 } from "@/lib/seed-data";
 import { theme } from "@/lib/theme";
 
@@ -49,26 +47,48 @@ function formatNum(n) {
   return n.toString();
 }
 
-const BADGES = [
-  {
-    emoji: "💀",
-    label: "Legendary Loser",
-    condition: (score) => score > 20000,
-  },
-  {
-    emoji: "📉",
-    label: "Serial Failer",
-    condition: (_, count) => count >= 3,
-  },
-  {
-    emoji: "🏆",
-    label: "Shame Board Top 10",
-    condition: (score) => score > 10000,
-  },
+const ACHIEVEMENTS = [
   {
     emoji: "🌱",
     label: "Just Getting Started",
-    condition: (_, count) => count >= 1 && count < 3,
+    description: "Joined Failbase. Brave already.",
+    condition: (_, count) => count === 0,
+  },
+  {
+    emoji: "🎤",
+    label: "First Fall",
+    description: "Posted your first failure",
+    condition: (_, count) => count >= 1,
+  },
+  {
+    emoji: "💀",
+    label: "Serial Failer",
+    description: "Posted 3+ failures",
+    condition: (_, count) => count >= 3,
+  },
+  {
+    emoji: "🔥",
+    label: "Can't Stop Won't Stop",
+    description: "Posted 7+ failures",
+    condition: (_, count) => count >= 7,
+  },
+  {
+    emoji: "😬",
+    label: "Crowd Cringed",
+    description: "Earned 25+ shame points",
+    condition: (score) => score >= 25,
+  },
+  {
+    emoji: "📢",
+    label: "Public Meltdown",
+    description: "Earned 100+ shame points",
+    condition: (score) => score >= 100,
+  },
+  {
+    emoji: "🎪",
+    label: "Main Character Energy",
+    description: "Earned 300+ shame points",
+    condition: (score) => score >= 300,
   },
 ];
 
@@ -85,7 +105,6 @@ export default async function ProfilePage({ params }) {
 
   if (!dbProfile && !seedProfile) notFound();
 
-  // A DB row without auth_id that matches a seed username = seed profile in the DB
   const isSeedInDb = !!dbProfile && !dbProfile.auth_id && !!seedProfile;
   const isRealUser = !!dbProfile && !isSeedInDb;
   const profile = isRealUser ? dbProfile : seedProfile || dbProfile;
@@ -95,35 +114,112 @@ export default async function ProfilePage({ params }) {
   } = await supabase.auth.getUser();
   const isOwnProfile = user && isRealUser && dbProfile?.auth_id === user.id;
 
+  let currentUserId = null;
+  if (user) {
+    if (dbProfile?.auth_id === user.id) {
+      currentUserId = dbProfile.id;
+    } else {
+      const { data: myProfile } = await supabase
+        .from("profiles")
+        .select("id")
+        .eq("auth_id", user.id)
+        .single();
+      currentUserId = myProfile?.id || null;
+    }
+  }
+
   let userPosts = [];
+  let userComments = [];
+
   if (isRealUser) {
     const { data } = await supabase
       .from("posts")
       .select("*, profiles(username, avatar_url, avatar_seed)")
       .eq("author_id", profile.id)
       .order("created_at", { ascending: false });
-    userPosts = (data || []).map((p) => ({
+
+    const posts = (data || []).map((p) => ({
       ...p,
       username: p.profiles?.username,
       avatar_url: p.profiles?.avatar_url || null,
       avatar_seed: p.profiles?.avatar_seed || null,
     }));
+
+    if (posts.length > 0) {
+      const postIds = posts.map((p) => p.id);
+
+      const { data: allReactions } = await supabase
+        .from("reactions")
+        .select("post_id, reaction_key, user_id")
+        .in("post_id", postIds);
+
+      const reactionsByPost = {};
+      const userReactionsByPost = {};
+
+      (allReactions || []).forEach((r) => {
+        if (!reactionsByPost[r.post_id]) {
+          reactionsByPost[r.post_id] = {
+            yikes: 0,
+            same: 0,
+            skull: 0,
+            understandable: 0,
+          };
+        }
+        reactionsByPost[r.post_id][r.reaction_key]++;
+        if (currentUserId && r.user_id === currentUserId) {
+          userReactionsByPost[r.post_id] = r.reaction_key;
+        }
+      });
+
+      const { data: commentRows } = await supabase
+        .from("comments")
+        .select("post_id")
+        .in("post_id", postIds);
+
+      const commentCountsByPost = {};
+      (commentRows || []).forEach((c) => {
+        commentCountsByPost[c.post_id] =
+          (commentCountsByPost[c.post_id] || 0) + 1;
+      });
+
+      userPosts = posts.map((p) => ({
+        ...p,
+        reactions: reactionsByPost[p.id] || {
+          yikes: 0,
+          same: 0,
+          skull: 0,
+          understandable: 0,
+        },
+        userReaction: userReactionsByPost[p.id] || null,
+        comments_count: commentCountsByPost[p.id] || 0,
+      }));
+    } else {
+      userPosts = posts;
+    }
+
+    const { data: comments } = await supabase
+      .from("comments")
+      .select("*, posts(id, content, author_name)")
+      .eq("author_id", profile.id)
+      .order("created_at", { ascending: false });
+    userComments = comments || [];
   } else {
-    // Use seed-X ID to match seed posts
     const seedId = seedProfile?.id;
     userPosts = seedId ? SEED_POSTS.filter((p) => p.author_id === seedId) : [];
   }
 
-  const totalScore = isRealUser
-    ? userPosts.length * 100
-    : userPosts.reduce((s, p) => s + getFailureScore(p), 0);
+  const totalReactions = userPosts.reduce(
+    (s, p) => s + getTotalReactions(p.reactions || {}),
+    0,
+  );
+  const totalComments = userPosts.reduce(
+    (s, p) => s + (p.comments_count || 0),
+    0,
+  );
+  const totalScore = userPosts.length * 5 + totalReactions + totalComments * 3;
 
-  const totalReactions = isRealUser
-    ? 0
-    : userPosts.reduce((s, p) => s + getTotalReactions(p.reactions), 0);
-
-  const earnedBadges = BADGES.filter((b) =>
-    b.condition(totalScore, userPosts.length),
+  const earnedBadges = ACHIEVEMENTS.filter((a) =>
+    a.condition(totalScore, userPosts.length),
   );
 
   const avatarUrl =
@@ -135,7 +231,6 @@ export default async function ProfilePage({ params }) {
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-6">
-      {/* Seed profile banner */}
       {!isRealUser && (
         <div
           className="mb-4 px-4 py-3 rounded-xl flex items-center gap-2"
@@ -241,67 +336,12 @@ export default async function ProfilePage({ params }) {
               {formatNum(profile.connections || 0)} connections
             </span>
           </div>
-
-          {earnedBadges.length > 0 && (
-            <div className="flex flex-wrap gap-2 mt-4">
-              {earnedBadges.map((badge) => (
-                <span
-                  key={badge.label}
-                  className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold"
-                  style={{
-                    background: theme.accentLight,
-                    color: theme.accent,
-                    border: `1px solid ${theme.accent}44`,
-                  }}
-                >
-                  {badge.emoji} {badge.label}
-                </span>
-              ))}
-            </div>
-          )}
         </div>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-[200px_1fr] gap-5">
         <div className="flex flex-col gap-4">
-          <div className="card p-4">
-            <h3
-              style={{
-                fontSize: "11px",
-                fontWeight: 700,
-                color: theme.muted,
-                textTransform: "uppercase",
-                letterSpacing: "0.06em",
-                marginBottom: "12px",
-              }}
-            >
-              Stats
-            </h3>
-            <div className="flex flex-col gap-2">
-              {[
-                { label: "Posts", value: userPosts.length },
-                { label: "Reactions", value: formatNum(totalReactions) },
-                {
-                  label: "Connections",
-                  value: formatNum(profile.connections || 0),
-                },
-              ].map((row) => (
-                <div key={row.label} className="flex justify-between text-xs">
-                  <span style={{ color: theme.muted }}>{row.label}</span>
-                  <span
-                    style={{
-                      fontWeight: 700,
-                      color: theme.dark,
-                      fontFamily: "var(--font-mono)",
-                    }}
-                  >
-                    {row.value}
-                  </span>
-                </div>
-              ))}
-            </div>
-          </div>
-
+          {/* About */}
           {isOwnProfile ? (
             <ProfileAboutEdit
               currentAbout={profile.about || ""}
@@ -338,51 +378,189 @@ export default async function ProfilePage({ params }) {
               </p>
             </div>
           )}
-        </div>
 
-        <div>
-          <h2
-            style={{
-              fontSize: "11px",
-              fontWeight: 700,
-              color: theme.muted,
-              textTransform: "uppercase",
-              letterSpacing: "0.06em",
-              marginBottom: "12px",
-              paddingLeft: "4px",
-            }}
-          >
-            Activity · {userPosts.length}{" "}
-            {userPosts.length === 1 ? "post" : "posts"}
-          </h2>
-          {userPosts.length > 0 ? (
-            <div className="flex flex-col gap-4">
-              {userPosts.map((post) => (
-                <CardFailPost key={post.id} post={post} />
-              ))}
-            </div>
-          ) : (
-            <div
-              className="card p-8 text-center"
-              style={{ color: theme.muted }}
+          {/* Shame Score */}
+          <div className="card p-4">
+            <h3
+              style={{
+                fontSize: "11px",
+                fontWeight: 700,
+                color: theme.muted,
+                textTransform: "uppercase",
+                letterSpacing: "0.06em",
+                marginBottom: "8px",
+              }}
             >
-              <div className="text-4xl mb-3">🌱</div>
-              <p className="text-sm font-medium">No posts yet.</p>
-              {isOwnProfile && (
-                <Link
-                  href="/submit"
-                  className="inline-block mt-3 px-4 py-2 rounded-full text-sm font-semibold text-white"
+              Shame Score
+            </h3>
+            <div
+              style={{
+                fontSize: "28px",
+                fontWeight: 700,
+                color: theme.accent,
+                fontFamily: "var(--font-mono)",
+                lineHeight: 1,
+              }}
+            >
+              {formatNum(totalScore)}
+            </div>
+            <div
+              style={{
+                fontSize: "10px",
+                color: theme.muted,
+                marginTop: "2px",
+                marginBottom: "12px",
+              }}
+            >
+              points
+            </div>
+            <div
+              className="flex flex-col gap-1.5"
+              style={{
+                borderTop: `1px solid ${theme.border}`,
+                paddingTop: "10px",
+              }}
+            >
+              <div className="flex items-baseline justify-between gap-2 text-xs">
+                <span style={{ color: theme.muted }} className="shrink-0">
+                  Posts (×5)
+                </span>
+                <span
                   style={{
-                    background: `linear-gradient(135deg, ${theme.accent}, ${theme.highlight})`,
+                    color: theme.dark,
+                    fontFamily: "var(--font-mono)",
                   }}
                 >
-                  Post your first failure →
-                </Link>
-              )}
+                  {formatNum(userPosts.length * 5)}
+                </span>
+              </div>
+              <div className="flex items-baseline justify-between gap-2 text-xs">
+                <span style={{ color: theme.muted }} className="shrink-0">
+                  Reactions
+                </span>
+                <span
+                  style={{
+                    color: theme.dark,
+                    fontFamily: "var(--font-mono)",
+                  }}
+                >
+                  {formatNum(totalReactions)}
+                </span>
+              </div>
+              <div className="flex items-baseline justify-between gap-2 text-xs">
+                <span style={{ color: theme.muted }} className="shrink-0">
+                  Comments (×3)
+                </span>
+                <span
+                  style={{
+                    color: theme.dark,
+                    fontFamily: "var(--font-mono)",
+                  }}
+                >
+                  {formatNum(totalComments * 3)}
+                </span>
+              </div>
+              <div
+                className="flex items-baseline justify-between gap-2 text-xs"
+                style={{
+                  borderTop: `1px solid ${theme.border}`,
+                  paddingTop: "6px",
+                  marginTop: "4px",
+                }}
+              >
+                <span
+                  style={{ color: theme.muted, fontWeight: 600 }}
+                  className="shrink-0"
+                >
+                  Total
+                </span>
+                <span
+                  style={{
+                    fontWeight: 700,
+                    color: theme.accent,
+                    fontFamily: "var(--font-mono)",
+                  }}
+                >
+                  {formatNum(totalScore)}
+                </span>
+              </div>
+            </div>
+            <div
+              className="flex items-center gap-1 mt-3"
+              style={{ fontSize: "11px", color: theme.muted }}
+            >
+              <span>👥</span>
+              <span style={{ fontWeight: 600 }}>
+                {formatNum(profile.connections || 0)}
+              </span>
+              <span>connections</span>
+            </div>
+          </div>
+
+          {/* Achievements */}
+          {earnedBadges.length > 0 && (
+            <div className="card p-4">
+              <h3
+                style={{
+                  fontSize: "11px",
+                  fontWeight: 700,
+                  color: theme.muted,
+                  textTransform: "uppercase",
+                  letterSpacing: "0.06em",
+                  marginBottom: "12px",
+                }}
+              >
+                Achievements
+              </h3>
+              <div className="flex flex-col gap-3">
+                {earnedBadges.map((badge) => (
+                  <div key={badge.label}>
+                    <span
+                      className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold"
+                      style={{
+                        background: theme.accentLight,
+                        color: theme.accent,
+                        border: `1px solid ${theme.accent}44`,
+                      }}
+                    >
+                      {badge.emoji} {badge.label}
+                    </span>
+                    <p
+                      style={{
+                        fontSize: "11px",
+                        color: theme.muted,
+                        marginTop: "4px",
+                        paddingLeft: "4px",
+                      }}
+                    >
+                      {badge.description}
+                    </p>
+                  </div>
+                ))}
+              </div>
             </div>
           )}
         </div>
+
+        {/* Activity */}
+        <ProfileActivityTabs
+          posts={userPosts}
+          comments={userComments}
+          currentUserId={currentUserId}
+          isOwnProfile={isOwnProfile}
+          username={profile.username}
+        />
       </div>
+      {isOwnProfile && (
+        <AchievementModalWrapper
+          achievements={earnedBadges.map(({ emoji, label, description }) => ({
+            emoji,
+            label,
+            description,
+          }))}
+          profileId={profile.id}
+        />
+      )}
     </div>
   );
 }

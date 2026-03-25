@@ -3,16 +3,63 @@ import Link from "next/link";
 import { createSupabaseServerClient } from "@/lib/supabase-server";
 import CardFailPost from "@/components/cards/CardFailPost";
 import CommentInput from "@/components/ui/CommentInput";
+import DeletePostButton from "@/components/ui/DeletePostButton";
 import {
   SEED_POSTS,
   SEED_PROFILES,
   getAvatarUrl,
   formatNumber,
+  getTotalReactions,
 } from "@/lib/seed-data";
 import { theme } from "@/lib/theme";
 import { formatDistanceToNow } from "date-fns";
 
 export const dynamic = "force-dynamic";
+
+const ACHIEVEMENTS = [
+  {
+    emoji: "🌱",
+    label: "Just Getting Started",
+    description: "Joined Failbase. Brave already.",
+    condition: (_, count) => count === 0,
+  },
+  {
+    emoji: "🎤",
+    label: "First Fall",
+    description: "Posted your first failure",
+    condition: (_, count) => count >= 1,
+  },
+  {
+    emoji: "💀",
+    label: "Serial Failer",
+    description: "Posted 3+ failures",
+    condition: (_, count) => count >= 3,
+  },
+  {
+    emoji: "🔥",
+    label: "Can't Stop Won't Stop",
+    description: "Posted 7+ failures",
+    condition: (_, count) => count >= 7,
+  },
+  {
+    emoji: "😬",
+    label: "Crowd Cringed",
+    description: "Earned 25+ shame points",
+    condition: (score) => score >= 25,
+  },
+  {
+    emoji: "📢",
+    label: "Public Meltdown",
+    description: "Earned 100+ shame points",
+    condition: (score) => score >= 100,
+  },
+  {
+    emoji: "🎪",
+    label: "Main Character Energy",
+    description: "Earned 300+ shame points",
+    condition: (score) => score >= 300,
+  },
+];
 
 export async function generateMetadata({ params }) {
   const supabase = createSupabaseServerClient();
@@ -65,10 +112,29 @@ export default async function PostDetailPage({ params }) {
   let comments = [];
   let reactionCounts = { yikes: 0, same: 0, skull: 0, understandable: 0 };
   let userReaction = null;
+  let authorAchievements = [];
 
   if (isSeedPost) {
     post = { ...seedPost, userReaction: null };
     authorProfile = SEED_PROFILES.find((p) => p.id === seedPost.author_id);
+
+    // Calculate seed author achievements
+    const authorPosts = SEED_POSTS.filter(
+      (p) => p.author_id === seedPost.author_id,
+    );
+    const totalReactions = authorPosts.reduce(
+      (s, p) => s + getTotalReactions(p.reactions || {}),
+      0,
+    );
+    const totalComments = authorPosts.reduce(
+      (s, p) => s + (p.comments_count || 0),
+      0,
+    );
+    const totalScore =
+      authorPosts.length * 5 + totalReactions + totalComments * 3;
+    authorAchievements = ACHIEVEMENTS.filter((a) =>
+      a.condition(totalScore, authorPosts.length),
+    ).map(({ emoji, label, description }) => ({ emoji, label, description }));
   } else {
     const { data: realPost } = await supabase
       .from("posts")
@@ -117,11 +183,53 @@ export default async function PostDetailPage({ params }) {
 
     comments = commentRows || [];
     post.comments_count = comments.length;
+
+    // Calculate real author achievements
+    if (authorProfile?.id) {
+      const { data: authorPosts } = await supabase
+        .from("posts")
+        .select("id")
+        .eq("author_id", authorProfile.id);
+
+      const authorPostIds = (authorPosts || []).map((p) => p.id);
+      let authorTotalReactions = 0;
+      let authorTotalComments = 0;
+
+      if (authorPostIds.length > 0) {
+        const { count: rCount } = await supabase
+          .from("reactions")
+          .select("*", { count: "exact", head: true })
+          .in("post_id", authorPostIds);
+        authorTotalReactions = rCount || 0;
+
+        const { count: cCount } = await supabase
+          .from("comments")
+          .select("*", { count: "exact", head: true })
+          .in("post_id", authorPostIds);
+        authorTotalComments = cCount || 0;
+      }
+
+      const authorScore =
+        (authorPosts?.length || 0) * 5 +
+        authorTotalReactions +
+        authorTotalComments * 3;
+
+      authorAchievements = ACHIEVEMENTS.filter((a) =>
+        a.condition(authorScore, authorPosts?.length || 0),
+      ).map(({ emoji, label, description }) => ({
+        emoji,
+        label,
+        description,
+      }));
+    }
   }
+
+  const isOwnPost =
+    !isSeedPost && userProfile && post.author_id === userProfile.id;
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-6">
-      <div className="mb-5">
+      <div className="mb-5 flex items-center justify-between">
         <Link
           href="/"
           prefetch={true}
@@ -134,6 +242,7 @@ export default async function PostDetailPage({ params }) {
         >
           ← Back to feed
         </Link>
+        {isOwnPost && <DeletePostButton postId={post.id} />}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_280px] gap-6 items-start">
@@ -190,7 +299,11 @@ export default async function PostDetailPage({ params }) {
         </div>
 
         <aside className="flex flex-col gap-4 lg:sticky lg:top-[76px]">
-          <AuthorSidebar profile={authorProfile} isSeedProfile={isSeedPost} />
+          <AuthorSidebar
+            profile={authorProfile}
+            isSeedProfile={isSeedPost}
+            achievements={authorAchievements}
+          />
           <div className="card p-4 text-center">
             <p
               style={{
@@ -218,7 +331,7 @@ export default async function PostDetailPage({ params }) {
   );
 }
 
-function AuthorSidebar({ profile, isSeedProfile }) {
+function AuthorSidebar({ profile, isSeedProfile, achievements }) {
   if (!profile) return null;
 
   const avatarUrl = isSeedProfile
@@ -332,6 +445,43 @@ function AuthorSidebar({ profile, isSeedProfile }) {
             {about}
           </p>
         </div>
+
+        {achievements.length > 0 && (
+          <div
+            className="mt-3 pt-3"
+            style={{ borderTop: `1px solid ${theme.sand}` }}
+          >
+            <div
+              style={{
+                fontSize: "10px",
+                fontWeight: 700,
+                color: theme.muted,
+                textTransform: "uppercase",
+                letterSpacing: "0.06em",
+                marginBottom: "8px",
+              }}
+            >
+              Achievements
+            </div>
+            <div className="flex flex-wrap gap-1.5">
+              {achievements.map((badge) => (
+                <span
+                  key={badge.label}
+                  className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full"
+                  style={{
+                    fontSize: "11px",
+                    fontWeight: 600,
+                    background: theme.accentLight,
+                    color: theme.accent,
+                    border: `1px solid ${theme.accent}44`,
+                  }}
+                >
+                  {badge.emoji} {badge.label}
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
 
         {isSeedProfile && (
           <div

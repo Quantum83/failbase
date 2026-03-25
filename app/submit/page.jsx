@@ -81,9 +81,8 @@ export default function SubmitPage() {
       return;
     }
 
-    // Redirect to the profile page where the post will be visible
-    router.push(`/profile/${profile.username}`);
-    router.refresh();
+    // Redirect to the new post
+    router.push(`/post/${newPost.id}`);
   }
 
   if (!authChecked) {
