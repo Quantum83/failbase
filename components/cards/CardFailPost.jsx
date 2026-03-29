@@ -78,7 +78,6 @@ function InlineCommentInput({ postId, currentUserId, onCommentAdded }) {
 
     setIsSubmitting(true);
 
-    // Get current user's profile for display
     const { data: profile } = await supabase
       .from("profiles")
       .select("id, display_name, avatar_url, avatar_seed, username")
@@ -100,7 +99,6 @@ function InlineCommentInput({ postId, currentUserId, onCommentAdded }) {
 
     if (error) return;
 
-    // Add to local state with profile info
     onCommentAdded({
       ...newComment,
       profiles: profile
@@ -293,7 +291,6 @@ export default function CardFailPost({
   const hoverTimeout = useRef(null);
   const hideTimeout = useRef(null);
 
-  // Inline comments state
   const [showComments, setShowComments] = useState(false);
   const [comments, setComments] = useState([]);
   const [commentsLoaded, setCommentsLoaded] = useState(false);
@@ -432,6 +429,17 @@ export default function CardFailPost({
     hideTimeout.current = setTimeout(() => setShowPopup(false), 200);
   }
 
+  // Touch support for reaction popup
+  function handleReactBtnClick() {
+    if (showPopup) {
+      // Popup is open, default action
+      if (activeReaction) handleReact(activeReaction);
+      else handleReact("yikes");
+    } else {
+      setShowPopup(true);
+    }
+  }
+
   function handleShare() {
     const url = `${window.location.origin}/post/${post.id}`;
     navigator.clipboard.writeText(url).then(() => {
@@ -468,10 +476,10 @@ export default function CardFailPost({
         </div>
       )}
 
-      <div className="p-5">
+      <div className="p-4 sm:p-5">
         {/* Author row */}
         <div className="flex items-start gap-3 mb-4">
-          <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-white shadow-sm shrink-0">
+          <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full overflow-hidden border-2 border-white shadow-sm shrink-0">
             {profileUsername ? (
               <Link href={`/profile/${profileUsername}`}>
                 <img
@@ -515,15 +523,41 @@ export default function CardFailPost({
             >
               {displayTitle}
             </p>
-            <p
-              style={{
-                fontSize: "12px",
-                color: theme.muted,
-                marginTop: "2px",
-              }}
+            <div
+              className="flex items-center gap-2 flex-wrap"
+              style={{ marginTop: "2px" }}
             >
-              {timeAgo} · 🌍
-            </p>
+              <span style={{ fontSize: "12px", color: theme.muted }}>
+                {timeAgo} · 🌍
+              </span>
+              {post.category &&
+                post.category !== "other" &&
+                (() => {
+                  const CATS = {
+                    startup: { emoji: "💸", label: "Startup" },
+                    career: { emoji: "💼", label: "Career" },
+                    investment: { emoji: "📉", label: "Investment" },
+                    pitch: { emoji: "🎤", label: "Pitch" },
+                    personal_brand: { emoji: "🤡", label: "Brand" },
+                  };
+                  const cat = CATS[post.category];
+                  if (!cat) return null;
+                  return (
+                    <span
+                      className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full"
+                      style={{
+                        fontSize: "10px",
+                        fontWeight: 600,
+                        color: theme.accent,
+                        background: theme.accentLight,
+                        border: `1px solid ${theme.accent}33`,
+                      }}
+                    >
+                      {cat.emoji} {cat.label}
+                    </span>
+                  );
+                })()}
+            </div>
           </div>
         </div>
 
@@ -595,7 +629,7 @@ export default function CardFailPost({
             marginBottom: "4px",
           }}
         />
-        <div className="flex items-center gap-1 pt-1">
+        <div className="flex items-center gap-0.5 sm:gap-1 pt-1">
           {/* React */}
           <div
             className="relative"
@@ -610,11 +644,7 @@ export default function CardFailPost({
             )}
             <button
               className="reaction-bar-btn"
-              onClick={() =>
-                activeReaction
-                  ? handleReact(activeReaction)
-                  : handleReact("yikes")
-              }
+              onClick={handleReactBtnClick}
               style={
                 activeReaction
                   ? {
@@ -629,7 +659,9 @@ export default function CardFailPost({
               <span className="text-base">
                 {currentReaction ? currentReaction.emoji : "😬"}
               </span>
-              <span>{currentReaction ? currentReaction.label : "React"}</span>
+              <span className="hidden xs:inline">
+                {currentReaction ? currentReaction.label : "React"}
+              </span>
             </button>
           </div>
 
@@ -650,26 +682,31 @@ export default function CardFailPost({
               }
             >
               <span className="text-base">💬</span>
-              <span>Comments</span>
+              <span className="hidden xs:inline">Comments</span>
             </button>
           )}
 
           {/* Right group */}
-          <div className="flex items-center gap-1 ml-auto">
+          <div className="flex items-center gap-0.5 sm:gap-1 ml-auto">
             {!hideComment && (
               <Link
                 href={`/post/${post.id}`}
                 prefetch={true}
                 className="reaction-bar-btn"
                 style={{ textDecoration: "none" }}
+                title="View post"
               >
                 <span className="text-base">📄</span>
-                <span>View</span>
+                <span className="hidden sm:inline">View</span>
               </Link>
             )}
-            <button className="reaction-bar-btn" onClick={handleShare}>
+            <button
+              className="reaction-bar-btn"
+              onClick={handleShare}
+              title="Share"
+            >
               <span className="text-base">↗️</span>
-              <span>Share</span>
+              <span className="hidden sm:inline">Share</span>
             </button>
           </div>
         </div>

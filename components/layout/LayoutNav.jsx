@@ -5,13 +5,13 @@ import { usePathname, useRouter } from "next/navigation";
 import { theme } from "@/lib/theme";
 import { supabase } from "@/lib/supabase";
 
+// Explore intentionally NOT in this list — it lives in the bottom bar only
 const navItems = [
   { href: "/", label: "Feed", icon: "📉" },
   { href: "/leaderboard", label: "Shame Board", icon: "🏆" },
 ];
 
 export default function LayoutNav() {
-  const [isMobileOpen, setIsMobileOpen] = useState(false);
   const [user, setUser] = useState(null);
   const [profile, setProfile] = useState(null);
   const [showUserMenu, setShowUserMenu] = useState(false);
@@ -39,6 +39,10 @@ export default function LayoutNav() {
     return () => subscription.unsubscribe();
   }, [pathname]);
 
+  useEffect(() => {
+    setShowUserMenu(false);
+  }, [pathname]);
+
   async function fetchProfile(authId) {
     const { data } = await supabase
       .from("profiles")
@@ -57,7 +61,9 @@ export default function LayoutNav() {
 
   const avatarUrl =
     profile?.avatar_url ||
-    `https://api.dicebear.com/8.x/notionists/svg?seed=${profile?.avatar_seed || "default"}&backgroundColor=b6e3f4,c0aede`;
+    `https://api.dicebear.com/8.x/notionists/svg?seed=${
+      profile?.avatar_seed || "default"
+    }&backgroundColor=b6e3f4,c0aede`;
 
   return (
     <header
@@ -104,7 +110,7 @@ export default function LayoutNav() {
           </span>
         </Link>
 
-        {/* Search */}
+        {/* Search — desktop only */}
         <div className="hidden md:flex flex-1 max-w-xs">
           <div className="w-full relative">
             <input
@@ -124,10 +130,13 @@ export default function LayoutNav() {
           </div>
         </div>
 
-        {/* Nav */}
+        {/* Desktop nav */}
         <nav className="hidden md:flex items-center gap-1">
           {navItems.map((item) => {
-            const isActive = pathname === item.href;
+            const isActive =
+              item.href === "/"
+                ? pathname === "/"
+                : pathname.startsWith(item.href);
             return (
               <Link
                 key={item.href}
@@ -137,7 +146,10 @@ export default function LayoutNav() {
               >
                 <span className="text-lg leading-none">{item.icon}</span>
                 <span
-                  style={{ fontSize: "11px", fontWeight: isActive ? 600 : 400 }}
+                  style={{
+                    fontSize: "11px",
+                    fontWeight: isActive ? 600 : 400,
+                  }}
                 >
                   {item.label}
                 </span>
@@ -161,7 +173,6 @@ export default function LayoutNav() {
             </div>
           )}
 
-          {/* Auth section */}
           {user ? (
             <div className="relative ml-2">
               <button
@@ -191,7 +202,29 @@ export default function LayoutNav() {
               </button>
 
               {showUserMenu && (
-                <div className="absolute right-0 top-full mt-2 w-48 card shadow-lg py-1 z-50">
+                <div className="absolute right-0 top-full mt-2 w-56 card shadow-lg py-1 z-50">
+                  {/* Name + email header */}
+                  <div
+                    className="px-4 py-2.5"
+                    style={{ borderBottom: `1px solid ${theme.border}` }}
+                  >
+                    <div
+                      style={{
+                        fontSize: "13px",
+                        fontWeight: 600,
+                        color: theme.dark,
+                      }}
+                      className="truncate"
+                    >
+                      {profile?.display_name}
+                    </div>
+                    <div
+                      style={{ fontSize: "11px", color: theme.muted }}
+                      className="truncate"
+                    >
+                      {user?.email}
+                    </div>
+                  </div>
                   <Link
                     href={`/profile/${profile?.username}`}
                     className="block px-4 py-2 text-sm hover:bg-[#F9F8F6] transition-colors"
@@ -235,66 +268,78 @@ export default function LayoutNav() {
           )}
         </nav>
 
-        {/* Mobile toggle */}
-        <button
-          className="md:hidden p-2"
-          style={{ color: theme.muted }}
-          onClick={() => setIsMobileOpen(!isMobileOpen)}
-        >
-          <div className="w-5 h-0.5 bg-current mb-1.5 rounded" />
-          <div className="w-5 h-0.5 bg-current mb-1.5 rounded" />
-          <div className="w-5 h-0.5 bg-current rounded" />
-        </button>
-      </div>
-
-      {/* Mobile menu */}
-      {isMobileOpen && (
-        <div
-          className="md:hidden border-t bg-white px-4 py-3 flex flex-col gap-1"
-          style={{ borderColor: theme.border }}
-        >
-          {navItems.map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              className="flex items-center gap-2 py-2 px-2 text-sm font-medium rounded-lg"
-              style={{ color: theme.dark }}
-              onClick={() => setIsMobileOpen(false)}
-            >
-              <span>{item.icon}</span>
-              {item.label}
-            </Link>
-          ))}
+        {/* Mobile top bar — avatar or sign in only, bottom bar handles nav */}
+        <div className="md:hidden flex items-center gap-2">
           {user ? (
-            <>
-              <Link
-                href={`/profile/${profile?.username}`}
-                className="flex items-center gap-2 py-2 px-2 text-sm font-medium"
-                style={{ color: theme.dark }}
-                onClick={() => setIsMobileOpen(false)}
-              >
-                👤 My Profile
-              </Link>
-              <button
-                onClick={handleSignOut}
-                className="flex items-center gap-2 py-2 px-2 text-sm font-medium"
-                style={{ color: theme.red }}
-              >
-                Sign Out
-              </button>
-            </>
+            <button
+              onClick={() => setShowUserMenu(!showUserMenu)}
+              className="w-8 h-8 rounded-full overflow-hidden"
+              style={{ border: `1.5px solid ${theme.border}` }}
+            >
+              <img
+                src={avatarUrl}
+                alt={profile?.display_name}
+                className="w-full h-full object-cover"
+              />
+            </button>
           ) : (
             <Link
               href="/auth"
-              className="flex items-center justify-center py-2 px-3 rounded-full text-sm font-semibold text-white mt-1"
+              className="px-3 py-1.5 rounded-full text-xs font-semibold text-white"
               style={{
                 background: `linear-gradient(135deg, ${theme.accent}, ${theme.highlight})`,
               }}
-              onClick={() => setIsMobileOpen(false)}
             >
-              Sign In / Sign Up
+              Sign In
             </Link>
           )}
+        </div>
+      </div>
+
+      {/* Mobile user menu dropdown */}
+      {showUserMenu && (
+        <div className="md:hidden absolute right-4 top-[60px] mt-1 w-56 card shadow-lg py-1 z-50">
+          <div
+            className="px-4 py-2.5"
+            style={{ borderBottom: `1px solid ${theme.border}` }}
+          >
+            <div
+              style={{ fontSize: "13px", fontWeight: 600, color: theme.dark }}
+              className="truncate"
+            >
+              {profile?.display_name}
+            </div>
+            <div
+              style={{ fontSize: "11px", color: theme.muted }}
+              className="truncate"
+            >
+              {user?.email}
+            </div>
+          </div>
+          <Link
+            href={`/profile/${profile?.username}`}
+            className="block px-4 py-2 text-sm hover:bg-[#F9F8F6] transition-colors"
+            style={{ color: theme.dark }}
+            onClick={() => setShowUserMenu(false)}
+          >
+            👤 My Profile
+          </Link>
+          <Link
+            href="/submit"
+            className="block px-4 py-2 text-sm hover:bg-[#F9F8F6] transition-colors"
+            style={{ color: theme.dark }}
+            onClick={() => setShowUserMenu(false)}
+          >
+            ✍️ Post a Failure
+          </Link>
+          <div className="h-px my-1" style={{ background: theme.border }} />
+          <button
+            onClick={handleSignOut}
+            className="block w-full text-left px-4 py-2 text-sm hover:bg-[#F9F8F6] transition-colors"
+            style={{ color: theme.red }}
+          >
+            Sign Out
+          </button>
         </div>
       )}
     </header>

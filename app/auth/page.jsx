@@ -130,12 +130,9 @@ export default function AuthPage() {
   }
 
   return (
-    <div
-      className="min-h-screen flex items-center justify-center px-4 py-12"
-      style={{ background: theme.bg }}
-    >
+    <div className="flex-1 flex items-center justify-center px-4 py-4 -mb-[72px] lg:mb-0">
       <div className="w-full max-w-sm">
-        <div className="text-center mb-8">
+        <div className="text-center mb-6">
           <div className="inline-flex items-center gap-2 mb-3">
             <div
               className="w-10 h-10 rounded-xl flex items-center justify-center text-white font-bold text-lg"
@@ -233,7 +230,11 @@ export default function AuthPage() {
             <div className="text-center py-4">
               <div className="text-3xl mb-2">📬</div>
               <p
-                style={{ fontSize: "14px", fontWeight: 600, color: theme.dark }}
+                style={{
+                  fontSize: "14px",
+                  fontWeight: 600,
+                  color: theme.dark,
+                }}
               >
                 {success}
               </p>
@@ -332,7 +333,7 @@ export default function AuthPage() {
         </div>
 
         <p
-          className="text-center mt-4"
+          className="text-center mt-3"
           style={{ fontSize: "11px", color: theme.muted, opacity: 0.6 }}
         >
           By signing up you agree to be publicly associated with your failures.

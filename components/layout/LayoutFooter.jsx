@@ -3,7 +3,7 @@ import { theme } from "@/lib/theme";
 export default function LayoutFooter() {
   return (
     <footer
-      className="py-8"
+      className="py-8 mb-[60px] lg:mb-0"
       style={{ borderTop: `1px solid ${theme.border}`, background: "white" }}
     >
       <div className="max-w-6xl mx-auto px-4 text-center">

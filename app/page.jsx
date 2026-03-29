@@ -4,12 +4,14 @@ import FeedSorter from "@/components/ui/FeedSorter";
 import CardProfile from "@/components/cards/CardProfile";
 import CardStatsWidget from "@/components/cards/CardStatsWidget";
 import CardTrendingTopics from "@/components/cards/CardTrendingTopics";
+import PeopleSection from "@/components/ui/PeopleSection";
 import {
   SEED_POSTS,
   SEED_PROFILES,
   getProfile,
   getAvatarUrl,
   getDateSeeded,
+  FAKE_ADS,
 } from "@/lib/seed-data";
 import { theme } from "@/lib/theme";
 
@@ -91,7 +93,7 @@ export default async function HomePage() {
     });
   }
 
-  // Find trending post (most reactions among real posts in last 48hrs)
+  // Trending post
   const cutoff = new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString();
   let trendingPostId = null;
   let trendingPostData = null;
@@ -115,7 +117,6 @@ export default async function HomePage() {
         trendingPostData = p;
       }
     });
-    // Only feature if it has at least 1 reaction
     if (maxReactions < 1) {
       trendingPostId = null;
       trendingPostData = null;
@@ -140,7 +141,7 @@ export default async function HomePage() {
 
   const allPosts = [...formattedRealPosts, ...SEED_POSTS];
 
-  // Story of the Week: trending real post or daily-rotating seed fallback
+  // Story of the Week — real trending post, seed fallback
   let storyOfWeek;
   if (trendingPostData) {
     storyOfWeek = {
@@ -158,7 +159,7 @@ export default async function HomePage() {
     };
   }
 
-  // People Who Get It — real users first, seed fallback to fill 3 spots
+  // People Who Get It — fetch more for modal
   let peopleQuery = supabase
     .from("profiles")
     .select("username, display_name, title, avatar_url, avatar_seed")
@@ -170,7 +171,7 @@ export default async function HomePage() {
 
   const { data: realUsers } = await peopleQuery
     .order("created_at", { ascending: false })
-    .limit(3);
+    .limit(15);
 
   const realPeople = (realUsers || []).map((u) => ({
     name: u.display_name,
@@ -179,67 +180,135 @@ export default async function HomePage() {
     avatarUrl: u.avatar_url || getAvatarUrl(u.avatar_seed || "default"),
   }));
 
-  let peopleWhoGetIt = realPeople;
-  if (peopleWhoGetIt.length < 3) {
+  let allPeople = realPeople;
+  if (allPeople.length < 10) {
     const seedFallback = SEED_PROFILES.filter(
-      (sp) => !peopleWhoGetIt.find((p) => p.username === sp.username),
+      (sp) => !allPeople.find((p) => p.username === sp.username),
     )
-      .slice(0, 3 - peopleWhoGetIt.length)
+      .slice(0, 10 - allPeople.length)
       .map((sp) => ({
         name: sp.display_name,
         title: sp.title,
         username: sp.username,
         avatarUrl: getAvatarUrl(sp.avatar_seed),
       }));
-    peopleWhoGetIt = [...peopleWhoGetIt, ...seedFallback];
+    allPeople = [...allPeople, ...seedFallback];
   }
+
+  const isLoggedIn = !!userProfile;
+  const todayAd = getDateSeeded(FAKE_ADS, 1, 7)[0];
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-6">
-      <div
-        className="card mb-6 overflow-hidden"
-        style={{
-          background: `linear-gradient(135deg, ${theme.dark} 0%, ${theme.accent} 100%)`,
-        }}
-      >
-        <div className="px-6 py-4 relative flex items-center justify-between gap-4">
-          <div
-            className="absolute top-0 right-0 w-48 h-48 rounded-full opacity-10 pointer-events-none"
-            style={{
-              background: theme.highlight,
-              transform: "translate(30%, -30%)",
-            }}
-          />
-          <div className="relative z-10">
-            <p
+      {/* Hero — big for logged out, slim for logged in */}
+      {!isLoggedIn ? (
+        <div
+          className="card mb-6 overflow-hidden"
+          style={{
+            background: `linear-gradient(135deg, ${theme.dark} 0%, ${theme.accent} 100%)`,
+          }}
+        >
+          <div className="px-6 py-8 sm:py-10 relative">
+            <div
+              className="absolute top-0 right-0 w-64 h-64 rounded-full opacity-10 pointer-events-none"
               style={{
-                fontSize: "14px",
-                fontWeight: 600,
-                color: "rgba(255,255,255,0.95)",
-                lineHeight: 1.5,
+                background: theme.highlight,
+                transform: "translate(30%, -30%)",
               }}
-            >
-              📉 The honest professional network.
-            </p>
-            <p
-              style={{
-                fontSize: "13px",
-                color: "rgba(255,255,255,0.6)",
-                lineHeight: 1.5,
-              }}
-            >
-              Real growth comes from real stories. Post yours.
-            </p>
+            />
+            <div className="relative z-10 max-w-lg">
+              <h1
+                style={{
+                  fontFamily: "var(--font-display)",
+                  fontSize: "1.6rem",
+                  fontWeight: 700,
+                  color: "white",
+                  lineHeight: 1.3,
+                  marginBottom: "8px",
+                }}
+              >
+                📉 The Honest Professional Network
+              </h1>
+              <p
+                style={{
+                  fontSize: "14px",
+                  color: "rgba(255,255,255,0.7)",
+                  lineHeight: 1.6,
+                  marginBottom: "20px",
+                }}
+              >
+                Where the best professionals come to celebrate their worst
+                moments. Post your failures. Earn your shame badge. Grow for
+                real.
+              </p>
+              <div className="flex flex-wrap gap-3">
+                <Link
+                  href="/auth"
+                  className="px-5 py-2.5 rounded-full font-semibold text-sm text-white transition-all hover:opacity-90"
+                  style={{ background: theme.highlight }}
+                >
+                  Join Failbase →
+                </Link>
+                <Link
+                  href="/explore"
+                  className="px-5 py-2.5 rounded-full font-semibold text-sm transition-all hover:opacity-90"
+                  style={{
+                    color: "white",
+                    border: "1.5px solid rgba(255,255,255,0.3)",
+                  }}
+                >
+                  Explore
+                </Link>
+              </div>
+            </div>
           </div>
-          <Link
-            href="/submit"
-            className="shrink-0 px-4 py-2 rounded-full font-semibold text-sm text-white transition-all hover:opacity-90 hidden sm:block"
-            style={{ background: theme.highlight }}
-          >
-            ✍️ Post Your Story
-          </Link>
         </div>
-      </div>
+      ) : (
+        <div
+          className="card mb-6 overflow-hidden"
+          style={{
+            background: `linear-gradient(135deg, ${theme.dark} 0%, ${theme.accent} 100%)`,
+          }}
+        >
+          <div className="px-6 py-4 relative flex items-center justify-between gap-4">
+            <div
+              className="absolute top-0 right-0 w-48 h-48 rounded-full opacity-10 pointer-events-none"
+              style={{
+                background: theme.highlight,
+                transform: "translate(30%, -30%)",
+              }}
+            />
+            <div className="relative z-10">
+              <p
+                style={{
+                  fontSize: "14px",
+                  fontWeight: 600,
+                  color: "rgba(255,255,255,0.95)",
+                  lineHeight: 1.5,
+                }}
+              >
+                📉 The honest professional network.
+              </p>
+              <p
+                style={{
+                  fontSize: "13px",
+                  color: "rgba(255,255,255,0.6)",
+                  lineHeight: 1.5,
+                }}
+              >
+                Real growth comes from real stories. Post yours.
+              </p>
+            </div>
+            <Link
+              href="/submit"
+              className="shrink-0 px-4 py-2 rounded-full font-semibold text-sm text-white transition-all hover:opacity-90 hidden sm:block"
+              style={{ background: theme.highlight }}
+            >
+              ✍️ Post Your Story
+            </Link>
+          </div>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-[260px_1fr_240px] gap-8 items-start">
         <aside className="hidden lg:flex flex-col gap-4 sticky top-[76px]">
@@ -258,7 +327,7 @@ export default async function HomePage() {
             >
               People Who Get It
             </h3>
-            <PeopleYouMayKnow people={peopleWhoGetIt} />
+            <PeopleSection people={allPeople} initialCount={3} />
           </div>
         </aside>
 
@@ -355,7 +424,7 @@ export default async function HomePage() {
                 marginBottom: "4px",
               }}
             >
-              🧘 Failure Coaching
+              {todayAd.emoji} {todayAd.title}
             </div>
             <p
               style={{
@@ -365,8 +434,7 @@ export default async function HomePage() {
                 lineHeight: 1.5,
               }}
             >
-              Turn your story into your strategy. 12 weeks.{" "}
-              <em>"I too was once employed."</em>
+              {todayAd.body}
             </p>
             <button
               style={{
@@ -379,60 +447,11 @@ export default async function HomePage() {
                 color: theme.muted,
               }}
             >
-              Learn More
+              {todayAd.cta}
             </button>
           </div>
         </aside>
       </div>
-    </div>
-  );
-}
-
-function PeopleYouMayKnow({ people }) {
-  return (
-    <div className="flex flex-col gap-3">
-      {people.map((person) => (
-        <div key={person.username} className="flex items-center gap-2">
-          <Link
-            href={`/profile/${person.username}`}
-            className="w-9 h-9 rounded-full overflow-hidden shrink-0"
-          >
-            <img
-              src={person.avatarUrl}
-              alt={person.name}
-              className="w-full h-full object-cover"
-            />
-          </Link>
-          <div className="flex-1 min-w-0">
-            <Link
-              href={`/profile/${person.username}`}
-              className="block truncate hover:underline"
-              style={{ fontSize: "12px", fontWeight: 600, color: theme.dark }}
-            >
-              {person.name}
-            </Link>
-            <div
-              style={{ fontSize: "11px", color: theme.muted }}
-              className="truncate"
-            >
-              {person.title}
-            </div>
-          </div>
-          <button
-            style={{
-              fontSize: "11px",
-              color: theme.accent,
-              border: `1px solid ${theme.accent}`,
-              borderRadius: "99px",
-              padding: "2px 10px",
-              fontWeight: 600,
-              whiteSpace: "nowrap",
-            }}
-          >
-            + Follow
-          </button>
-        </div>
-      ))}
     </div>
   );
 }

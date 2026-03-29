@@ -12,6 +12,7 @@ import {
   getTotalReactions,
 } from "@/lib/seed-data";
 import { theme } from "@/lib/theme";
+import SignOutButton from "@/components/ui/SignOutButton";
 
 export const dynamic = "force-dynamic";
 
@@ -279,8 +280,10 @@ export default async function ProfilePage({ params }) {
                 />
               </div>
             )}
-            {!isOwnProfile && (
-              <div className="flex gap-2 mb-1">
+            <div className="flex gap-2 mb-1">
+              {isOwnProfile ? (
+                <SignOutButton />
+              ) : (
                 <button
                   className="px-4 py-1.5 rounded-full text-sm font-semibold transition-colors"
                   style={{
@@ -290,8 +293,8 @@ export default async function ProfilePage({ params }) {
                 >
                   + Connect
                 </button>
-              </div>
-            )}
+              )}
+            </div>
           </div>
 
           {isOwnProfile ? (

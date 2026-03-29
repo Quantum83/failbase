@@ -205,33 +205,37 @@ export default function ProfileEditFields({
   }
 
   return (
-    <div className="group">
-      <div className="flex items-center gap-2">
-        <h1
-          style={{
-            fontFamily: "var(--font-display)",
-            fontSize: "1.5rem",
-            fontWeight: 700,
-            color: theme.dark,
-          }}
-        >
-          {currentName}
-        </h1>
+    <div>
+      <div className="flex items-start justify-between gap-2">
+        <div className="min-w-0">
+          <h1
+            style={{
+              fontFamily: "var(--font-display)",
+              fontSize: "1.5rem",
+              fontWeight: 700,
+              color: theme.dark,
+            }}
+          >
+            {currentName}
+          </h1>
+          <p style={{ fontSize: "13px", color: theme.muted, marginTop: "2px" }}>
+            {currentTitle || <em>No headline yet</em>}
+          </p>
+        </div>
         <button
           onClick={() => setIsEditing(true)}
-          className="opacity-0 group-hover:opacity-100 transition-opacity text-xs px-2.5 py-1 rounded-full"
+          className="shrink-0 text-xs px-2.5 py-1 rounded-full transition-opacity hover:opacity-80 mt-1"
           style={{
             color: theme.accent,
             border: `1px solid ${theme.accent}44`,
+            background: theme.accentLight,
             fontSize: "11px",
+            fontWeight: 600,
           }}
         >
-          ✏️ Edit Profile
+          ✏️ Edit
         </button>
       </div>
-      <p style={{ fontSize: "13px", color: theme.muted, marginTop: "2px" }}>
-        {currentTitle || <em>No headline yet — hover to edit!</em>}
-      </p>
     </div>
   );
 }

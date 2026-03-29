@@ -1,36 +1,44 @@
-@import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,600;0,9..144,700;1,9..144,400;1,9..144,600&family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=DM+Mono:wght@400;500&display=swap');
+@import url("https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,600;0,9..144,700;1,9..144,400;1,9..144,600&family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=DM+Mono:wght@400;500&display=swap");
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 :root {
-  --font-display: 'Fraunces', Georgia, serif;
-  --font-body: 'Plus Jakarta Sans', system-ui, sans-serif;
-  --font-mono: 'DM Mono', monospace;
+  --font-display: "Fraunces", Georgia, serif;
+  --font-body: "Plus Jakarta Sans", system-ui, sans-serif;
+  --font-mono: "DM Mono", monospace;
 
-  --color-cream: #F9F8F6;
-  --color-sand: #EFE9E3;
-  --color-stone: #D9CFC7;
-  --color-warm: #C9B59C;
-  --color-green: #6F8F72;
-  --color-green-light: #EEF3EE;
-  --color-orange: #F2A65A;
-  --color-orange-light: #FEF3E8;
-  --color-charcoal: #2C2C2C;
-  --color-muted: #7A736C;
-  --color-border: #DDD8D2;
-  --color-red: #C0392B;
+  --color-cream: #f9f8f6;
+  --color-sand: #efe9e3;
+  --color-stone: #d9cfc7;
+  --color-warm: #c9b59c;
+  --color-green: #6f8f72;
+  --color-green-light: #eef3ee;
+  --color-orange: #f2a65a;
+  --color-orange-light: #fef3e8;
+  --color-charcoal: #2c2c2c;
+  --color-muted: #7a736c;
+  --color-border: #ddd8d2;
+  --color-red: #c0392b;
 }
 
-* { box-sizing: border-box; }
-html { scroll-behavior: smooth; }
+* {
+  box-sizing: border-box;
+}
+html {
+  scroll-behavior: smooth;
+}
 
 body {
   background-color: var(--color-cream);
   color: var(--color-charcoal);
   font-family: var(--font-body);
   -webkit-font-smoothing: antialiased;
+}
+
+html {
+  overflow-x: hidden;
 }
 
 .card {
@@ -56,7 +64,7 @@ body {
   padding: 6px 10px;
   display: flex;
   gap: 4px;
-  box-shadow: 0 4px 24px rgba(0,0,0,0.12);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.12);
   z-index: 50;
   white-space: nowrap;
   animation: popUp 0.15s cubic-bezier(0.34, 1.56, 0.64, 1);
@@ -140,34 +148,104 @@ body {
   border-radius: 6px;
 }
 
-.medal-gold { background: linear-gradient(135deg, #C9A84C, #F4D03F); }
-.medal-silver { background: linear-gradient(135deg, #A8A9AD, #D4D6D9); }
-.medal-bronze { background: linear-gradient(135deg, #CD7F32, #E8955A); }
+.medal-gold {
+  background: linear-gradient(135deg, #c9a84c, #f4d03f);
+}
+.medal-silver {
+  background: linear-gradient(135deg, #a8a9ad, #d4d6d9);
+}
+.medal-bronze {
+  background: linear-gradient(135deg, #cd7f32, #e8955a);
+}
 
-::-webkit-scrollbar { width: 5px; }
-::-webkit-scrollbar-track { background: var(--color-cream); }
-::-webkit-scrollbar-thumb { background: var(--color-stone); border-radius: 3px; }
+::-webkit-scrollbar {
+  width: 5px;
+}
+::-webkit-scrollbar-track {
+  background: var(--color-cream);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--color-stone);
+  border-radius: 3px;
+}
 
 @keyframes popUp {
-  from { transform: scale(0.7) translateY(8px); opacity: 0; }
-  to { transform: scale(1) translateY(0); opacity: 1; }
+  from {
+    transform: scale(0.7) translateY(8px);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1) translateY(0);
+    opacity: 1;
+  }
 }
 
 @keyframes slideUp {
-  from { transform: translateY(16px); opacity: 0; }
-  to { transform: translateY(0); opacity: 1; }
+  from {
+    transform: translateY(16px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
-.animate-slide-up { animation: slideUp 0.4s ease-out both; }
-.animate-fade-in { animation: fadeIn 0.3s ease-out both; }
+.animate-slide-up {
+  animation: slideUp 0.4s ease-out both;
+}
+.animate-fade-in {
+  animation: fadeIn 0.3s ease-out both;
+}
 
-.stagger-1 { animation-delay: 0.05s; }
-.stagger-2 { animation-delay: 0.1s; }
-.stagger-3 { animation-delay: 0.15s; }
-.stagger-4 { animation-delay: 0.2s; }
-.stagger-5 { animation-delay: 0.25s; }
+.stagger-1 {
+  animation-delay: 0.05s;
+}
+.stagger-2 {
+  animation-delay: 0.1s;
+}
+.stagger-3 {
+  animation-delay: 0.15s;
+}
+.stagger-4 {
+  animation-delay: 0.2s;
+}
+.stagger-5 {
+  animation-delay: 0.25s;
+}
+
+/* ============================================
+   MOBILE RESPONSIVE ADDITIONS
+   ============================================ */
+
+/* Custom xs breakpoint for action bar text (480px) */
+@media (min-width: 480px) {
+  .xs\:inline {
+    display: inline !important;
+  }
+}
+
+/* Bottom bar safe area for iOS */
+@supports (padding-bottom: env(safe-area-inset-bottom)) {
+  .bottom-bar-safe {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+}
+
+/* Tighter reaction bar buttons on mobile */
+@media (max-width: 639px) {
+  .reaction-bar-btn {
+    padding: 6px 8px;
+    font-size: 12px;
+    gap: 3px;
+  }
+}
