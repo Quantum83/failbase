@@ -7,10 +7,13 @@ import { useToast, Toast } from "@/components/ui/Toast";
 
 function PersonRow({ person, onFollow }) {
   return (
-    <div className="flex items-center gap-2.5">
+    <div
+      className="grid items-center gap-2.5 w-full"
+      style={{ gridTemplateColumns: "auto 1fr auto" }}
+    >
       <Link
         href={`/profile/${person.username}`}
-        className="w-9 h-9 rounded-full overflow-hidden shrink-0"
+        className="w-9 h-9 rounded-full overflow-hidden"
       >
         <img
           src={person.avatarUrl}
@@ -18,7 +21,9 @@ function PersonRow({ person, onFollow }) {
           className="w-full h-full object-cover"
         />
       </Link>
-      <div className="flex-1 min-w-0">
+
+      {/* Middle column clamped by Grid */}
+      <div className="min-w-0 overflow-hidden">
         <Link
           href={`/profile/${person.username}`}
           className="block truncate hover:underline"
@@ -33,6 +38,7 @@ function PersonRow({ person, onFollow }) {
           {person.title}
         </div>
       </div>
+
       <button
         onClick={onFollow}
         style={{
@@ -160,7 +166,7 @@ export default function PeopleSection({ people, initialCount = 3 }) {
           document.body,
         )}
 
-      {mounted && createPortal(<Toast toast={toast} />, document.body)}
+      {mounted && toast && createPortal(<Toast toast={toast} />, document.body)}
     </>
   );
 }

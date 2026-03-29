@@ -478,8 +478,11 @@ export default function CardFailPost({
 
       <div className="p-4 sm:p-5">
         {/* Author row */}
-        <div className="flex items-start gap-3 mb-4">
-          <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full overflow-hidden border-2 border-white shadow-sm shrink-0">
+        <div
+          className="grid items-start gap-3 mb-4 w-full"
+          style={{ gridTemplateColumns: "auto 1fr" }}
+        >
+          <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full overflow-hidden border-2 border-white shadow-sm">
             {profileUsername ? (
               <Link href={`/profile/${profileUsername}`}>
                 <img
@@ -780,6 +783,7 @@ export default function CardFailPost({
       </div>
 
       {typeof document !== "undefined" &&
+        toast &&
         createPortal(<Toast toast={toast} />, document.body)}
     </article>
   );

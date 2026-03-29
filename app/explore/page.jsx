@@ -135,7 +135,7 @@ export default async function ExplorePage() {
   const todayAd = getDateSeeded(FAKE_ADS, 1, 7)[0];
 
   return (
-    <div className="max-w-2xl mx-auto px-4 py-6 overflow-hidden">
+    <div className="max-w-2xl mx-auto px-4 py-6">
       <h1
         className="mb-6"
         style={{
