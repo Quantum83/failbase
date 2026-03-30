@@ -1,5 +1,5 @@
 "use client";
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { createPortal } from "react-dom";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -254,6 +254,7 @@ export default function CardFailPost({
   post,
   currentUserId,
   hideComment = false,
+  embedded = false,
 }) {
   const router = useRouter();
   const { toast, showToast } = useToast();
@@ -298,6 +299,38 @@ export default function CardFailPost({
   const [localCommentCount, setLocalCommentCount] = useState(
     post.comments_count || 0,
   );
+
+  const [mounted, setMounted] = useState(false);
+  const isTouchDevice = useRef(false);
+  const reactContainerRef = useRef(null);
+
+  useEffect(() => {
+    setMounted(true);
+    isTouchDevice.current =
+      "ontouchstart" in window || navigator.maxTouchPoints > 0;
+  }, []);
+
+  useEffect(() => {
+    if (!showPopup) return;
+
+    function handleOutsideClick(e) {
+      if (
+        reactContainerRef.current &&
+        !reactContainerRef.current.contains(e.target)
+      ) {
+        setShowPopup(false);
+      }
+    }
+
+    const timer = setTimeout(() => {
+      document.addEventListener("click", handleOutsideClick);
+    }, 10);
+
+    return () => {
+      clearTimeout(timer);
+      document.removeEventListener("click", handleOutsideClick);
+    };
+  }, [showPopup]);
 
   const content = post.content || "";
   const isLong = content.length > 300;
@@ -420,23 +453,21 @@ export default function CardFailPost({
   }
 
   function handleMouseEnter() {
+    if (isTouchDevice.current) return;
     clearTimeout(hideTimeout.current);
     hoverTimeout.current = setTimeout(() => setShowPopup(true), 300);
   }
 
   function handleMouseLeave() {
+    if (isTouchDevice.current) return;
     clearTimeout(hoverTimeout.current);
     hideTimeout.current = setTimeout(() => setShowPopup(false), 200);
   }
 
-  // Touch support for reaction popup
-  function handleReactBtnClick() {
-    if (showPopup) {
-      // Popup is open, default action
-      if (activeReaction) handleReact(activeReaction);
-      else handleReact("yikes");
-    } else {
-      setShowPopup(true);
+  function handleReactBtnClick(e) {
+    e.stopPropagation();
+    if (isTouchDevice.current) {
+      setShowPopup((prev) => !prev);
     }
   }
 
@@ -452,7 +483,14 @@ export default function CardFailPost({
     : null;
 
   return (
-    <article className="card animate-slide-up overflow-hidden">
+    <article
+      className="card animate-slide-up overflow-hidden"
+      style={
+        embedded
+          ? { borderBottomLeftRadius: 0, borderBottomRightRadius: 0 }
+          : {}
+      }
+    >
       {post.is_featured && (
         <div
           className="px-5 py-2 flex items-center gap-2"
@@ -636,6 +674,7 @@ export default function CardFailPost({
           {/* React */}
           <div
             className="relative"
+            ref={reactContainerRef}
             onMouseEnter={handleMouseEnter}
             onMouseLeave={handleMouseLeave}
           >
@@ -662,7 +701,7 @@ export default function CardFailPost({
               <span className="text-base">
                 {currentReaction ? currentReaction.emoji : "😬"}
               </span>
-              <span className="hidden xs:inline">
+              <span className={hideComment ? "" : "hidden bp-react:inline"}>
                 {currentReaction ? currentReaction.label : "React"}
               </span>
             </button>
@@ -685,7 +724,7 @@ export default function CardFailPost({
               }
             >
               <span className="text-base">💬</span>
-              <span className="hidden xs:inline">Comments</span>
+              <span className="hidden bp-react:inline">Comments</span>
             </button>
           )}
 
@@ -700,7 +739,7 @@ export default function CardFailPost({
                 title="View post"
               >
                 <span className="text-base">📄</span>
-                <span className="hidden sm:inline">View</span>
+                <span className="hidden bp-view:inline">View</span>
               </Link>
             )}
             <button
@@ -709,7 +748,9 @@ export default function CardFailPost({
               title="Share"
             >
               <span className="text-base">↗️</span>
-              <span className="hidden sm:inline">Share</span>
+              <span className={hideComment ? "" : "hidden bp-share:inline"}>
+                Share
+              </span>
             </button>
           </div>
         </div>
@@ -782,9 +823,7 @@ export default function CardFailPost({
         )}
       </div>
 
-      {typeof document !== "undefined" &&
-        toast &&
-        createPortal(<Toast toast={toast} />, document.body)}
+      {mounted && toast && createPortal(<Toast toast={toast} />, document.body)}
     </article>
   );
 }

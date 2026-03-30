@@ -150,16 +150,6 @@ export default function FeedSorter({ posts, currentUserId }) {
       >
         {/* Desktop: sort pills left, filter dropdown right */}
         <div className="hidden sm:flex items-center gap-2 pr-2">
-          <span
-            style={{
-              fontSize: "12px",
-              color: theme.muted,
-              fontWeight: 500,
-              whiteSpace: "nowrap",
-            }}
-          >
-            Sort:
-          </span>
           <div className="flex gap-1.5 flex-1">
             {SORTS.map((sort) => (
               <button

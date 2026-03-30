@@ -22,7 +22,6 @@ function PersonRow({ person, onFollow }) {
         />
       </Link>
 
-      {/* Middle column clamped by Grid */}
       <div className="min-w-0 overflow-hidden">
         <Link
           href={`/profile/${person.username}`}
@@ -120,7 +119,6 @@ export default function PeopleSection({ people, initialCount = 3 }) {
   const [mounted, setMounted] = useState(false);
   const { toast, showToast } = useToast();
 
-  // Safe client-only mounting — fixes hydration mismatch
   useEffect(() => {
     setMounted(true);
   }, []);
@@ -154,7 +152,6 @@ export default function PeopleSection({ people, initialCount = 3 }) {
         </button>
       )}
 
-      {/* Only render portals after mount to avoid hydration mismatch */}
       {mounted &&
         showModal &&
         createPortal(

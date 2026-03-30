@@ -206,9 +206,13 @@ export default function ProfileEditFields({
 
   return (
     <div>
-      <div className="flex items-start justify-between gap-2">
-        <div className="min-w-0">
+      <div
+        className="grid items-start gap-2"
+        style={{ gridTemplateColumns: "1fr auto" }}
+      >
+        <div className="min-w-0 overflow-hidden">
           <h1
+            className="truncate"
             style={{
               fontFamily: "var(--font-display)",
               fontSize: "1.5rem",
@@ -218,7 +222,14 @@ export default function ProfileEditFields({
           >
             {currentName}
           </h1>
-          <p style={{ fontSize: "13px", color: theme.muted, marginTop: "2px" }}>
+          <p
+            style={{
+              fontSize: "13px",
+              color: theme.muted,
+              marginTop: "2px",
+              wordBreak: "break-word",
+            }}
+          >
             {currentTitle || <em>No headline yet</em>}
           </p>
         </div>

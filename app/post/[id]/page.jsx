@@ -118,7 +118,6 @@ export default async function PostDetailPage({ params }) {
     post = { ...seedPost, userReaction: null };
     authorProfile = SEED_PROFILES.find((p) => p.id === seedPost.author_id);
 
-    // Calculate seed author achievements
     const authorPosts = SEED_POSTS.filter(
       (p) => p.author_id === seedPost.author_id,
     );
@@ -184,7 +183,6 @@ export default async function PostDetailPage({ params }) {
     comments = commentRows || [];
     post.comments_count = comments.length;
 
-    // Calculate real author achievements
     if (authorProfile?.id) {
       const { data: authorPosts } = await supabase
         .from("posts")
@@ -228,7 +226,7 @@ export default async function PostDetailPage({ params }) {
     !isSeedPost && userProfile && post.author_id === userProfile.id;
 
   return (
-    <div className="max-w-6xl mx-auto px-4 py-6">
+    <div className="w-full max-w-6xl mx-auto px-4 py-6">
       <div className="mb-5 flex items-center justify-between">
         <Link
           href="/"
@@ -246,14 +244,25 @@ export default async function PostDetailPage({ params }) {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_280px] gap-6 items-start">
-        <div className="flex flex-col gap-4 min-w-0">
+        <div
+          className="flex flex-col"
+          style={{ minWidth: 0, width: "100%", overflow: "hidden" }}
+        >
           <CardFailPost
             post={post}
             currentUserId={userProfile?.id || null}
             hideComment={true}
+            embedded={true}
           />
 
-          <div className="card p-5">
+          <div
+            className="card p-5"
+            style={{
+              borderTopLeftRadius: 0,
+              borderTopRightRadius: 0,
+              marginTop: "-1px",
+            }}
+          >
             <h2
               style={{
                 fontSize: "13px",

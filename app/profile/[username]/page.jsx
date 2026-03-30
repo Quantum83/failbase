@@ -231,7 +231,7 @@ export default async function ProfilePage({ params }) {
   const displayLocation = profile.location || "Remote (By Necessity)";
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-6">
+    <div className="w-full max-w-6xl mx-auto px-4 py-6">
       {!isRealUser && (
         <div
           className="mb-4 px-4 py-3 rounded-xl flex items-center gap-2"
@@ -342,7 +342,7 @@ export default async function ProfilePage({ params }) {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-[200px_1fr] gap-5">
+      <div className="grid grid-cols-1 sm:grid-cols-[200px_1fr] gap-5 w-full">
         <div className="flex flex-col gap-4">
           {/* About */}
           {isOwnProfile ? (

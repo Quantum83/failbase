@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
@@ -12,7 +12,12 @@ export default function DeletePostButton({
 }) {
   const [showConfirm, setShowConfirm] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const router = useRouter();
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   async function handleDelete() {
     setIsDeleting(true);
@@ -46,11 +51,10 @@ export default function DeletePostButton({
         🗑️{!iconOnly && " Delete"}
       </button>
 
-      {showConfirm &&
-        typeof document !== "undefined" &&
+      {mounted &&
+        showConfirm &&
         createPortal(
           <>
-            {/* Backdrop */}
             <div
               style={{
                 position: "fixed",
@@ -65,7 +69,6 @@ export default function DeletePostButton({
               }}
             />
 
-            {/* Modal */}
             <div
               style={{
                 position: "fixed",

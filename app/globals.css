@@ -52,6 +52,8 @@ html {
   line-height: 1.7;
   color: var(--color-charcoal);
   white-space: pre-line;
+  word-break: break-word;
+  overflow-wrap: break-word;
 }
 
 .reaction-popup {
@@ -227,9 +229,24 @@ html {
    MOBILE RESPONSIVE ADDITIONS
    ============================================ */
 
-/* Custom xs breakpoint for action bar text (480px) */
-@media (min-width: 480px) {
-  .xs\:inline {
+/* Staggered action bar collapse breakpoints */
+/* Share text: visible at 450px+ */
+@media (min-width: 450px) {
+  .bp-share\:inline {
+    display: inline !important;
+  }
+}
+
+/* View text: visible at 400px+ */
+@media (min-width: 400px) {
+  .bp-view\:inline {
+    display: inline !important;
+  }
+}
+
+/* React + Comment text: visible at 360px+ */
+@media (min-width: 360px) {
+  .bp-react\:inline {
     display: inline !important;
   }
 }

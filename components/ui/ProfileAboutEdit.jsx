@@ -96,7 +96,10 @@ export default function ProfileAboutEdit({
 
   return (
     <div className="card p-4">
-      <div className="flex items-center justify-between mb-2">
+      <div
+        className="grid items-center gap-2 mb-2"
+        style={{ gridTemplateColumns: "1fr auto" }}
+      >
         <h3
           style={{
             fontSize: "11px",

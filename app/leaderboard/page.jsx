@@ -102,12 +102,12 @@ export default async function LeaderboardPage() {
       });
     }
 
-    rankedUsers = Object.values(userScores).sort(
-      (a, b) => b.totalScore - a.totalScore,
-    );
+    rankedUsers = Object.values(userScores)
+      .sort((a, b) => b.totalScore - a.totalScore)
+      .slice(0, 10);
   } else {
     // No real posts yet, show seed leaderboard
-    rankedUsers = getSeedLeaderboard();
+    rankedUsers = getSeedLeaderboard().slice(0, 10);
   }
 
   // Combined stats
@@ -239,7 +239,8 @@ export default async function LeaderboardPage() {
               Shame Score =
             </span>
             <span className="text-xs" style={{ color: theme.muted }}>
-              😬😭💀😔 Reactions + 💬 Comments × 3 + 📝 Posts × 5
+              😬😭💀😔 Reactions &nbsp;+&nbsp; 💬 Comments × 3 &nbsp;+&nbsp; 📝
+              Posts × 5
             </span>
           </div>
 
@@ -253,6 +254,72 @@ export default async function LeaderboardPage() {
                 <CardLeaderboardEntry user={user} rank={i + 1} />
               </div>
             ))}
+          </div>
+
+          {/* Shame tiers - mobile only */}
+          <div className="card p-4 lg:hidden mb-5 mt-2">
+            <div
+              className="text-xs font-bold uppercase tracking-widest mb-3"
+              style={{ color: theme.muted }}
+            >
+              Shame Tiers
+            </div>
+            <div className="space-y-2">
+              {[
+                {
+                  tier: "Grand Champion",
+                  range: "500+ pts",
+                  color: theme.highlight,
+                  bold: true,
+                  emoji: "🥇",
+                },
+                {
+                  tier: "Distinguished Loser",
+                  range: "150–499",
+                  color: theme.muted,
+                  bold: true,
+                  emoji: "🥈",
+                },
+                {
+                  tier: "Certified Disaster",
+                  range: "50–149",
+                  color: theme.muted,
+                  bold: true,
+                  emoji: "🥉",
+                },
+                {
+                  tier: "Aspiring Failure",
+                  range: "10–49",
+                  color: theme.muted,
+                  bold: false,
+                  emoji: "📉",
+                },
+                {
+                  tier: "Just Getting Started",
+                  range: "0–9",
+                  color: theme.muted,
+                  bold: false,
+                  emoji: "🌱",
+                },
+              ].map((t) => (
+                <div
+                  key={t.tier}
+                  className="flex justify-between items-center text-xs"
+                >
+                  <span>
+                    {t.emoji}{" "}
+                    <span
+                      style={{ color: t.color, fontWeight: t.bold ? 600 : 400 }}
+                    >
+                      {t.tier}
+                    </span>
+                  </span>
+                  <span className="font-mono" style={{ color: theme.muted }}>
+                    {t.range}
+                  </span>
+                </div>
+              ))}
+            </div>
           </div>
 
           {/* Bottom CTA */}

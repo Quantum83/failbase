@@ -250,6 +250,15 @@ export default async function HomePage() {
                   Join Failbase →
                 </Link>
                 <Link
+                  href="/leaderboard"
+                  className="px-5 py-2.5 rounded-full font-semibold text-sm text-white transition-all hover:opacity-90 hidden sm:block"
+                  style={{
+                    background: theme.accent,
+                  }}
+                >
+                  🏆 Shame Board
+                </Link>
+                <Link
                   href="/explore"
                   className="px-5 py-2.5 rounded-full font-semibold text-sm transition-all hover:opacity-90"
                   style={{
@@ -299,13 +308,25 @@ export default async function HomePage() {
                 Real growth comes from real stories. Post yours.
               </p>
             </div>
-            <Link
-              href="/submit"
-              className="shrink-0 px-4 py-2 rounded-full font-semibold text-sm text-white transition-all hover:opacity-90 hidden sm:block"
-              style={{ background: theme.highlight }}
-            >
-              ✍️ Post Your Story
-            </Link>
+            <div className="hidden sm:flex gap-3">
+              <Link
+                href="/leaderboard"
+                className="shrink-0 px-4 py-2 rounded-full font-semibold text-sm transition-all hover:opacity-90"
+                style={{
+                  color: "white",
+                  border: "1.5px solid rgba(255,255,255,0.3)",
+                }}
+              >
+                🏆 Shame Board
+              </Link>
+              <Link
+                href="/submit"
+                className="shrink-0 px-4 py-2 rounded-full font-semibold text-sm text-white transition-all hover:opacity-90"
+                style={{ background: theme.highlight }}
+              >
+                ✍️ Post Your Story
+              </Link>
+            </div>
           </div>
         </div>
       )}
@@ -387,6 +408,11 @@ export default async function HomePage() {
                 color: "rgba(255,255,255,0.65)",
                 marginBottom: "10px",
                 lineHeight: 1.5,
+                display: "-webkit-box",
+                WebkitLineClamp: 3,
+                WebkitBoxOrient: "vertical",
+                overflow: "hidden",
+                textOverflow: "ellipsis",
               }}
             >
               {storyOfWeek.snippet}
