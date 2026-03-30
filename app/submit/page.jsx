@@ -97,7 +97,7 @@ export default function SubmitPage() {
   }
 
   return (
-    <div className="max-w-2xl mx-auto px-4 py-8">
+    <div className="w-full max-w-2xl mx-auto px-4 py-8">
       <div className="mb-6">
         <div
           style={{
@@ -128,8 +128,11 @@ export default function SubmitPage() {
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
         {/* Author preview */}
-        <div className="card p-4 flex items-center gap-3">
-          <div className="w-11 h-11 rounded-full overflow-hidden shrink-0">
+        <div
+          className="card p-4 grid items-center gap-3 w-full"
+          style={{ gridTemplateColumns: "44px 1fr" }}
+        >
+          <div className="w-11 h-11 rounded-full overflow-hidden">
             <img
               src={
                 profile?.avatar_url ||
@@ -139,13 +142,17 @@ export default function SubmitPage() {
               className="w-full h-full object-cover"
             />
           </div>
-          <div>
+          <div className="min-w-0 overflow-hidden">
             <div
+              className="truncate"
               style={{ fontWeight: 600, color: theme.dark, fontSize: "14px" }}
             >
               {profile?.display_name}
             </div>
-            <div style={{ fontSize: "12px", color: theme.muted }}>
+            <div
+              className="truncate"
+              style={{ fontSize: "12px", color: theme.muted }}
+            >
               {profile?.title || "No headline yet"}
             </div>
           </div>

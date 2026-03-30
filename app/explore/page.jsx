@@ -13,6 +13,7 @@ import {
   FAKE_ADS,
 } from "@/lib/seed-data";
 import { theme } from "@/lib/theme";
+import SearchInput from "@/components/ui/SearchInput";
 
 export const dynamic = "force-dynamic";
 
@@ -135,7 +136,7 @@ export default async function ExplorePage() {
   const todayAd = getDateSeeded(FAKE_ADS, 1, 7)[0];
 
   return (
-    <div className="max-w-2xl mx-auto px-4 py-6">
+    <div className="w-full max-w-2xl mx-auto px-4 py-6">
       <h1
         className="mb-6"
         style={{
@@ -147,6 +148,26 @@ export default async function ExplorePage() {
       >
         🧭 Explore
       </h1>
+
+      {/* Search Failbase */}
+      <div className="mb-6">
+        <div
+          style={{
+            fontSize: "12px",
+            fontWeight: 700,
+            color: theme.muted,
+            textTransform: "uppercase",
+            letterSpacing: "0.06em",
+            marginBottom: "8px",
+          }}
+        >
+          🔍 Search Failbase
+        </div>
+        <SearchInput
+          compact
+          placeholder="Search posts, people, or regrets..."
+        />
+      </div>
 
       {/* Story of the Week hero */}
       <div

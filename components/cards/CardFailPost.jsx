@@ -265,7 +265,8 @@ export default function CardFailPost({
   const displayName =
     seedProfile?.display_name || post.author_name || "Anonymous";
   const displayTitle = seedProfile?.title || post.author_title || "";
-  const profileUsername = seedProfile?.username || post.username || null;
+  const profileUsername =
+    seedProfile?.username || post.author_username || post.username || null;
 
   const avatarUrl = seedProfile
     ? getAvatarUrl(seedProfile.avatar_seed)

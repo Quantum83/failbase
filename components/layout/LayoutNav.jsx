@@ -5,7 +5,6 @@ import { usePathname, useRouter } from "next/navigation";
 import { theme } from "@/lib/theme";
 import { supabase } from "@/lib/supabase";
 
-// Explore intentionally NOT in this list — it lives in the bottom bar only
 const navItems = [
   { href: "/", label: "Feed", icon: "📉" },
   { href: "/leaderboard", label: "Shame Board", icon: "🏆" },
@@ -15,6 +14,7 @@ export default function LayoutNav() {
   const [user, setUser] = useState(null);
   const [profile, setProfile] = useState(null);
   const [showUserMenu, setShowUserMenu] = useState(false);
+  const [searchValue, setSearchValue] = useState("");
   const pathname = usePathname();
   const router = useRouter();
 
@@ -57,6 +57,14 @@ export default function LayoutNav() {
     setShowUserMenu(false);
     router.push("/");
     router.refresh();
+  }
+
+  function handleSearch(e) {
+    e.preventDefault();
+    const trimmed = searchValue.trim();
+    if (!trimmed) return;
+    router.push(`/search?q=${encodeURIComponent(trimmed)}`);
+    setSearchValue("");
   }
 
   const avatarUrl =
@@ -110,24 +118,34 @@ export default function LayoutNav() {
           </span>
         </Link>
 
-        {/* Search — desktop only */}
+        {/* Search — desktop only, now functional */}
         <div className="hidden md:flex flex-1 max-w-xs">
-          <div className="w-full relative">
+          <form onSubmit={handleSearch} className="w-full relative">
             <input
               type="text"
+              value={searchValue}
+              onChange={(e) => setSearchValue(e.target.value)}
               placeholder="Search failures..."
-              readOnly
               className="w-full rounded-full px-4 py-1.5 text-sm focus:outline-none"
               style={{
                 background: theme.bg,
                 border: `1px solid ${theme.border}`,
-                color: theme.muted,
+                color: theme.dark,
               }}
             />
-            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-base">
+            <button
+              type="submit"
+              className="absolute right-3 top-1/2 -translate-y-1/2"
+              style={{
+                background: "none",
+                border: "none",
+                cursor: "pointer",
+                fontSize: "16px",
+              }}
+            >
               🔍
-            </span>
-          </div>
+            </button>
+          </form>
         </div>
 
         {/* Desktop nav */}
@@ -203,7 +221,6 @@ export default function LayoutNav() {
 
               {showUserMenu && (
                 <div className="absolute right-0 top-full mt-2 w-56 card shadow-lg py-1 z-50">
-                  {/* Name + email header */}
                   <div
                     className="px-4 py-2.5"
                     style={{ borderBottom: `1px solid ${theme.border}` }}
@@ -268,8 +285,15 @@ export default function LayoutNav() {
           )}
         </nav>
 
-        {/* Mobile top bar — avatar or sign in only, bottom bar handles nav */}
-        <div className="md:hidden flex items-center gap-2">
+        {/* Mobile top bar — search icon + avatar */}
+        <div className="md:hidden flex items-center gap-3">
+          <Link
+            href="/search"
+            className="flex items-center justify-center"
+            style={{ color: theme.muted }}
+          >
+            <span style={{ fontSize: "20px" }}>🔍</span>
+          </Link>
           {user ? (
             <button
               onClick={() => setShowUserMenu(!showUserMenu)}
