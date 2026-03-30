@@ -2,6 +2,24 @@ import "./globals.css";
 import LayoutNav from "@/components/layout/LayoutNav";
 import LayoutFooter from "@/components/layout/LayoutFooter";
 import LayoutBottomBar from "@/components/layout/LayoutBottomBar";
+import { Fraunces, Plus_Jakarta_Sans, DM_Mono } from "next/font/google";
+
+const fraunces = Fraunces({
+  subsets: ["latin"],
+  variable: "--font-display",
+  display: "swap",
+});
+const plusJakarta = Plus_Jakarta_Sans({
+  subsets: ["latin"],
+  variable: "--font-body",
+  display: "swap",
+});
+const dmMono = DM_Mono({
+  subsets: ["latin"],
+  weight: ["400", "500"],
+  variable: "--font-mono",
+  display: "swap",
+});
 
 export const metadata = {
   title: "Failbase | The Professional Network for Failure",
@@ -23,7 +41,7 @@ export default function RootLayout({ children }) {
   return (
     <html lang="en">
       <body
-        className="min-h-screen flex flex-col"
+        className={`${fraunces.variable} ${plusJakarta.variable} ${dmMono.variable} min-h-screen flex flex-col`}
         style={{ background: "#FBF5EC" }}
       >
         <LayoutNav />
