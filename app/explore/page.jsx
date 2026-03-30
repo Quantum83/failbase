@@ -241,14 +241,6 @@ export default async function ExplorePage() {
 
       {/* 
       People Who Get It 
-      THIS IS THE PROBLEM!!!
-
-      ok explore is still not fixed. still the same issue. i know this happened exactly after i implemented the changes ive attached a screenshot of. after doing some random tests, i know the problem isnt with the widgets, since i removed them off the page entirely and it didnt fix the issue. i know the problem isnt with the long headline in the people section, since the problem persists with seed data. heres what did fix it though: i commented out the "people who get it" div on the explore page. that immediately fixed the mobile crop/scaling issues.
-
-      this is what i commented out to fix the problem:
-
-      specifically the line: <PeopleSection people={allPeople} initialCount={5} />
-      so whats going on?
       */}
       <div className="card p-5 mb-6">
         <h3
