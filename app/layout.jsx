@@ -3,6 +3,7 @@ import LayoutNav from "@/components/layout/LayoutNav";
 import LayoutFooter from "@/components/layout/LayoutFooter";
 import LayoutBottomBar from "@/components/layout/LayoutBottomBar";
 import { Fraunces, Plus_Jakarta_Sans, DM_Mono } from "next/font/google";
+import Script from "next/script";
 
 const fraunces = Fraunces({
   subsets: ["latin"],
@@ -83,6 +84,11 @@ export default function RootLayout({ children }) {
         </main>
         <LayoutFooter />
         <LayoutBottomBar />
+        <Script
+          defer
+          src="https://static.cloudflareinsights.com/beacon.min.js"
+          data-cf-beacon='{"token": "d2f060ef193141c390ab5332d11ee017"}'
+        />
       </body>
     </html>
   );
