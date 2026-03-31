@@ -9,8 +9,15 @@ export const dynamic = "force-dynamic";
 
 export function generateMetadata({ searchParams }) {
   const q = searchParams.q;
-  if (q) return { title: `"${q}" | Search | Failbase` };
-  return { title: "Search | Failbase" };
+  if (q)
+    return {
+      title: `"${q}" | Search`,
+      description: `Search results for "${q}" on Failbase.`,
+    };
+  return {
+    title: "Search",
+    description: "Search for failures and people on Failbase.",
+  };
 }
 
 const PER_PAGE = 20;

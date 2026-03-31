@@ -14,33 +14,61 @@ import {
 import { theme } from "@/lib/theme";
 import SignOutButton from "@/components/ui/SignOutButton";
 
-export const dynamic = "force-dynamic";
-
 export async function generateMetadata({ params }) {
   const supabase = createSupabaseServerClient();
   const { data: profile } = await supabase
     .from("profiles")
-    .select("display_name, title")
+    .select("display_name, title, about")
     .eq("username", params.username)
     .single();
 
   if (profile) {
+    const title = profile.title
+      ? `${profile.display_name} | ${profile.title}`
+      : profile.display_name;
+    const description = profile.about
+      ? profile.about.slice(0, 155)
+      : profile.title ||
+        `${profile.display_name}'s failure profile on Failbase`;
+
     return {
-      title: `${profile.display_name} | Failbase`,
-      description: profile.title || "A professional on Failbase",
+      title,
+      description,
+      openGraph: {
+        title: `${title} | Failbase`,
+        description,
+        type: "profile",
+        url: `https://failbase.win/profile/${params.username}`,
+        images: [{ url: "/og-image.png", width: 1200, height: 630 }],
+      },
+      twitter: { card: "summary", title: `${title} | Failbase`, description },
     };
   }
 
   const seedProfile = SEED_PROFILES.find((p) => p.username === params.username);
   if (seedProfile) {
+    const title = seedProfile.title
+      ? `${seedProfile.display_name} | ${seedProfile.title}`
+      : seedProfile.display_name;
+
     return {
-      title: `${seedProfile.display_name} | Failbase`,
+      title,
       description: seedProfile.title || "A fictional professional on Failbase",
+      openGraph: {
+        title: `${title} | Failbase`,
+        description:
+          seedProfile.title || "A fictional professional on Failbase",
+        type: "profile",
+        url: `https://failbase.win/profile/${params.username}`,
+        images: [{ url: "/og-image.png", width: 1200, height: 630 }],
+      },
     };
   }
 
-  return { title: "Profile | Failbase" };
+  return { title: "Profile Not Found" };
 }
+
+export const dynamic = "force-dynamic";
 
 function formatNum(n) {
   if (!n) return "0";

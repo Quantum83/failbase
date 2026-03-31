@@ -14,6 +14,64 @@ import {
 import { theme } from "@/lib/theme";
 import { formatDistanceToNow } from "date-fns";
 
+export async function generateMetadata({ params }) {
+  const supabase = createSupabaseServerClient();
+  const { data: post } = await supabase
+    .from("posts")
+    .select("content, author_name")
+    .eq("id", params.id)
+    .single();
+
+  if (post) {
+    const snippet =
+      post.content.length > 155
+        ? post.content.slice(0, 155) + "..."
+        : post.content;
+    const title = `${post.author_name || "Someone"}'s Failure`;
+
+    return {
+      title,
+      description: snippet,
+      openGraph: {
+        title: `${title} | Failbase`,
+        description: snippet,
+        type: "article",
+        url: `https://failbase.win/post/${params.id}`,
+        images: [{ url: "/og-image.png", width: 1200, height: 630 }],
+      },
+      twitter: {
+        card: "summary_large_image",
+        title: `${title} | Failbase`,
+        description: snippet,
+      },
+    };
+  }
+
+  const seedPost = SEED_POSTS.find((p) => p.id === params.id);
+  if (seedPost) {
+    const seedProfile = SEED_PROFILES.find((p) => p.id === seedPost.author_id);
+    const snippet =
+      seedPost.content.length > 155
+        ? seedPost.content.slice(0, 155) + "..."
+        : seedPost.content;
+    const title = `${seedProfile?.display_name ?? "Someone"}'s Failure`;
+
+    return {
+      title,
+      description: snippet,
+      openGraph: {
+        title: `${title} | Failbase`,
+        description: snippet,
+        type: "article",
+        url: `https://failbase.win/post/${params.id}`,
+        images: [{ url: "/og-image.png", width: 1200, height: 630 }],
+      },
+    };
+  }
+
+  return { title: "Post Not Found" };
+}
+
 export const dynamic = "force-dynamic";
 
 const ACHIEVEMENTS = [
@@ -60,33 +118,6 @@ const ACHIEVEMENTS = [
     condition: (score) => score >= 300,
   },
 ];
-
-export async function generateMetadata({ params }) {
-  const supabase = createSupabaseServerClient();
-  const { data: post } = await supabase
-    .from("posts")
-    .select("content, author_name")
-    .eq("id", params.id)
-    .single();
-
-  if (post) {
-    return {
-      title: `${post.author_name} on Failbase`,
-      description: post.content.slice(0, 120) + "...",
-    };
-  }
-
-  const seedPost = SEED_POSTS.find((p) => p.id === params.id);
-  if (seedPost) {
-    const seedProfile = SEED_PROFILES.find((p) => p.id === seedPost.author_id);
-    return {
-      title: `${seedProfile?.display_name ?? "Someone"} on Failbase`,
-      description: seedPost.content.slice(0, 120) + "...",
-    };
-  }
-
-  return { title: "Post | Failbase" };
-}
 
 export default async function PostDetailPage({ params }) {
   const supabase = createSupabaseServerClient();

@@ -16,9 +16,9 @@ import { theme } from "@/lib/theme";
 export const dynamic = "force-dynamic";
 
 export const metadata = {
-  title: "Shame Board | Failbase",
+  title: "Shame Board",
   description:
-    "The definitive ranking of professional failures. Updated in real-time as careers collapse.",
+    "The most prolific failures on Failbase, ranked by Shame Score. Wear your losses with pride.",
 };
 
 export default async function LeaderboardPage() {

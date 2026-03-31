@@ -18,7 +18,9 @@ import SearchInput from "@/components/ui/SearchInput";
 export const dynamic = "force-dynamic";
 
 export const metadata = {
-  title: "Explore | Failbase",
+  title: "Explore",
+  description:
+    "Discover the latest professional failures, trending topics, and people who get it on Failbase.",
 };
 
 function getSnippet(content, maxLen = 120) {

@@ -22,13 +22,43 @@ const dmMono = DM_Mono({
 });
 
 export const metadata = {
-  title: "Failbase | The Professional Network for Failure",
+  metadataBase: new URL("https://failbase.win"),
+  title: {
+    default: "Failbase | The Honest Professional Network",
+    template: "%s | Failbase",
+  },
   description:
-    "Where the best professionals come to celebrate their worst moments. Post your failures. Earn your shame badge. Grow.",
+    "The professional network where people post their failures instead of their wins. Celebrate vulnerability, share honestly, grow together.",
+  keywords: [
+    "failure",
+    "professional network",
+    "LinkedIn parody",
+    "career failures",
+    "honest networking",
+    "vulnerability",
+  ],
   openGraph: {
-    title: "Failbase | The Professional Network for Failure",
-    description: "Post your failures. Earn your shame badge. Grow.",
     type: "website",
+    siteName: "Failbase",
+    title: "Failbase | The Honest Professional Network",
+    description:
+      "The professional network where people post their failures instead of their wins.",
+    url: "https://failbase.win",
+    images: [
+      {
+        url: "/og-image.png",
+        width: 1200,
+        height: 630,
+        alt: "Failbase | The Honest Professional Network",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Failbase | The Honest Professional Network",
+    description:
+      "The professional network where people post their failures instead of their wins.",
+    images: ["/og-image.png"],
   },
 };
 export const viewport = {

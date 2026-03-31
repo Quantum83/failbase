@@ -4,6 +4,12 @@ import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { theme } from "@/lib/theme";
 
+export const metadata = {
+  title: "Post Your Failure",
+  description:
+    "Share your professional failure with the Failbase community. No judgment, just growth (probably).",
+};
+
 const FAILURE_CATEGORIES = [
   { key: "startup", label: "💸 Startup Failure" },
   { key: "career", label: "💼 Career Implosion" },
